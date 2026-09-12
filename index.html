@@ -1646,8 +1646,9 @@ function startRealtime(){
     .on("postgres_changes",{event:"*",schema:"public",table:"web_sections"},scheduleLayoutRefresh)
     .on("postgres_changes",{event:"*",schema:"public",table:"web_section_items"},scheduleLayoutRefresh)
     .subscribe();
-}
-  }catch(e){console.warn('实时连接异常',e);}
+  }catch(e){
+    console.warn('实时连接异常',e);
+  }
 }
 
 function updateAdminSummary(){
