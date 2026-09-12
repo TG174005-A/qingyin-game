@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>网页管理系统 - 自适应版</title>
+<style>
+:root{
+  --primary:#1677ff;
+  --primary-hover:#0f68df;
+  --text:#1f2329;
+  --muted:#6b7280;
+  --panel:rgba(255,255,255,.88);
+  --border:#e5e7eb;
+  --radius:14px;
+  --shadow:0 12px 32px rgba(0,0,0,.12);
+}
+
+*{box-sizing:border-box}
+html,body{width:100%;min-height:100%;margin:0;padding:0}
+body{
+  font-family:"Microsoft YaHei","PingFang SC",Arial,sans-serif;
+  color:var(--text);
+  background:#ddd center/cover fixed no-repeat;
+  overflow-x:hidden;
+}
+
+#app{
+  width:100%;
+  min-height:100vh;
+  background:rgba(255,255,255,.85);
+  transition:opacity .25s ease;
+}
+
+header{
+  width:100%;
+  min-height:62px;
+  padding:12px clamp(14px,3vw,28px);
+  background:rgba(30,30,30,.96);
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:10px;
+  box-shadow:0 2px 10px rgba(0,0,0,.12);
+}
+header b{font-size:18px;letter-spacing:.5px}
+header div{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+#userShow{font-size:14px;color:#f3f4f6}
+
+button{
+  appearance:none;
+  padding:9px 16px;
+  border:0;
+  border-radius:8px;
+  background:var(--primary);
+  color:#fff;
+  cursor:pointer;
+  font-size:14px;
+  line-height:1.4;
+  transition:background .18s ease,transform .18s ease,box-shadow .18s ease;
+}
+button:hover{background:var(--primary-hover);box-shadow:0 4px 12px rgba(22,119,255,.22)}
+button:active{transform:translateY(1px)}
+button:focus-visible{outline:3px solid rgba(22,119,255,.25);outline-offset:2px}
+
+input,select{
+  width:100%;
+  max-width:100%;
+  padding:10px 12px;
+  margin:5px 0;
+  border:1px solid #d1d5db;
+  border-radius:8px;
+  background:#fff;
+  color:var(--text);
+  font:inherit;
+  outline:none;
+  transition:border-color .18s ease,box-shadow .18s ease;
+}
+input:focus,select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(22,119,255,.12)}
+input[type="file"]{padding:8px;background:#f9fafb}
+
+.area{
+  width:calc(100% - 30px);
+  margin:15px;
+  padding:20px;
+  background:rgba(255,255,255,.78);
+  border:1px solid rgba(255,255,255,.7);
+  border-radius:var(--radius);
+  min-height:120px;
+  overflow:hidden;
+  word-break:break-word;
+  box-shadow:0 6px 18px rgba(0,0,0,.05);
+  backdrop-filter:blur(3px);
+}
+.area h2{display:none}
+#mediaShow{display:flex;flex-wrap:wrap;align-items:flex-start;gap:12px}
+
+#loginBox{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.62);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:16px;
+  z-index:100;
+  backdrop-filter:blur(4px);
+}
+
+.panel{
+  width:100%;
+  max-width:390px;
+  background:#fff;
+  padding:28px;
+  border-radius:18px;
+  box-shadow:var(--shadow);
+}
+.panel h2{margin:0 0 14px;font-size:24px}
+.panel h3{margin:24px 0 8px;font-size:16px;color:#374151}
+.panel button{margin-top:6px;min-width:86px}
+#message{min-height:22px;margin:14px 0 0;color:#d4380d;font-size:14px}
+
+#admin{
+  display:none;
+  position:fixed;
+  right:15px;
+  top:75px;
+  width:calc(100% - 30px);
+  max-width:410px;
+  max-height:calc(100vh - 90px);
+  overflow:auto;
+  background:#fff;
+  padding:22px;
+  border-radius:16px;
+  z-index:200;
+  box-shadow:var(--shadow);
+  border:1px solid var(--border);
+}
+#admin h2{margin:0 0 14px;font-size:21px}
+#admin h3{margin:24px 0 7px;padding-top:4px;font-size:15px;color:#374151;border-top:1px solid #f0f1f3}
+#admin h3:first-of-type{margin-top:20px}
+#adminList{margin-top:18px;padding:10px 12px;border-radius:8px;background:#f6f7f9;color:var(--muted);font-size:14px}
+
+img,video{
+  display:block;
+  width:auto;
+  max-width:100%;
+  height:auto;
+  max-height:400px;
+  margin:0;
+  border-radius:12px;
+  object-fit:contain;
+  box-shadow:0 4px 14px rgba(0,0,0,.08);
+}
+
+@media(max-width:600px){
+  header{padding:11px 12px;font-size:16px}
+  header div{width:100%;justify-content:space-between}
+  .area{width:calc(100% - 20px);margin:10px;padding:14px;min-height:100px}
+  button{font-size:13px;padding:8px 12px}
+  #admin{left:10px;right:10px;top:68px;width:auto;max-height:calc(100vh - 78px);padding:18px}
+  .panel{padding:22px;border-radius:15px}
+  .panel h2{font-size:22px}
+  #mediaShow{gap:10px}
+  img,video{width:100%;max-height:55vh}
+}
+
+@media(min-width:1200px){
+  .area{max-width:1400px;margin:15px auto}
+}
+
+.media-item{position:relative;display:inline-flex;max-width:100%;align-items:flex-start}
+.media-item img,.media-item video{margin:0}
+.media-delete{position:absolute;top:8px;right:8px;z-index:3;padding:7px 12px;border:0;border-radius:8px;background:rgba(20,20,20,.78);color:#fff;font-size:13px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+.media-delete:hover{background:rgba(180,25,25,.92)}
+.video-admin-control{width:100%;margin-top:8px;padding:10px;border-radius:10px;background:rgba(255,255,255,.9);font-size:13px}
+.video-admin-control button{margin-right:8px}
+.video-admin-control input[type="range"]{width:min(260px,55vw);vertical-align:middle}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+
+<div id="loginBox">
+<div class="panel">
+<h2>用户登录</h2>
+<input id="loginName" placeholder="账号">
+<input id="loginPwd" type="password" placeholder="密码">
+<button onclick="login()">登录</button>
+
+<h3>注册普通账户</h3>
+<input id="regName" placeholder="账号">
+<input id="regPwd" type="password" placeholder="密码">
+<button onclick="register()">注册</button>
+
+<p id="message"></p>
+</div>
+</div>
+
+
+<div id="app">
+
+<header>
+<b>我的网页</b>
+<div>
+<span id="userShow"></span>
+<button id="adminBtn" style="display:none" onclick="showAdmin()">后台</button>
+</div>
+</header>
+
+
+<div class="area">
+<h2>上区</h2>
+</div>
+
+<div class="area">
+<h2>中区</h2>
+<div id="mediaShow"></div>
+</div>
+
+<div class="area">
+<h2>下区</h2>
+</div>
+
+</div>
+
+
+<div id="admin">
+
+<h2>最高权限后台</h2>
+
+<button onclick="hideAdmin()">关闭</button>
+
+<h3>网页背景</h3>
+<input id="bgInput" type="file" accept="image/*">
+<button onclick="setBackground()">修改背景</button>
+
+<h3>透明度</h3>
+<input id="opacityInput" type="number" min="1" max="100" value="85">
+<button onclick="setOpacity()">调整</button>
+
+<h3>图片/视频管理</h3>
+<input id="uploadInput" type="file" accept="image/*,video/*">
+<button onclick="upload()">上传</button>
+
+<h3>修改登录密码</h3>
+<input id="currentPwd" type="password" autocomplete="current-password" placeholder="当前密码">
+<input id="newPwd" type="password" autocomplete="new-password" placeholder="新密码（至少8位）">
+<input id="confirmPwd" type="password" autocomplete="new-password" placeholder="再次输入新密码">
+<button onclick="changeAdminPassword()">修改密码</button>
+
+<div id="adminList"></div>
+
+</div>
+
+
+<script>
+const SUPABASE_URL="https://dvvaymfuzprxqxfoqtzo.supabase.co";
+const SUPABASE_KEY="sb_publishable_CqNqbc_2Vx-YnTPw_h5A3g_Ai1kmuRk";
+let files=[];
+let currentUser=null;
+let realtimeChannel=null;
+let videoControlChannel=null;
+let videoControls={};
+const realtimeClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
+
+async function rpc(name, params={}){
+  const res=await fetch(`${SUPABASE_URL}/rest/v1/rpc/${name}`,{
+    method:"POST",
+    headers:{"Content-Type":"application/json","apikey":SUPABASE_KEY,"Authorization":`Bearer ${SUPABASE_KEY}`},
+    body:JSON.stringify(params)
+  });
+  const data=await res.json().catch(()=>({ok:false,error:"服务器返回异常"}));
+  if(!res.ok) throw new Error(data.message||data.error||"数据库请求失败");
+  return data;
+}
+function token(){return localStorage.getItem("webSessionToken")||"";}
+function showUser(user){
+  currentUser=user; loginBox.style.display="none"; userShow.textContent="用户："+user.name;
+  adminBtn.style.display=user.role==="admin"?"inline-block":"none";
+}
+async function register(){
+  const n=regName.value.trim(),p=regPwd.value;
+  try{const d=await rpc("web_register",{p_username:n,p_password:p}); message.textContent=d.ok?"注册成功，请登录":d.error; if(d.ok)regPwd.value="";}
+  catch(e){message.textContent=e.message;}
+}
+async function login(){
+  try{const d=await rpc("web_login",{p_username:loginName.value.trim(),p_password:loginPwd.value}); if(!d.ok){message.textContent=d.error;return;} localStorage.setItem("webSessionToken",d.token); showUser(d.user); await loadData(); startRealtime();}
+  catch(e){message.textContent=e.message;}
+}
+async function loadData(){
+  const d=await rpc("web_load",{p_token:token()});
+  if(!d.ok){localStorage.removeItem("webSessionToken");loginBox.style.display="flex";return;}
+  files=Array.isArray(d.media)?d.media:[];
+  if(d.settings){
+    if(d.settings.background)document.body.style.backgroundImage=`url(${d.settings.background})`;
+    const op=Number(d.settings.opacity||85); document.getElementById("app").style.opacity=op/100; opacityInput.value=op;
+  }
+  await loadVideoControls();
+  render();
+}
+async function loadVideoControls(){
+  try{
+    const d=await rpc("web_get_video_controls",{p_token:token()});
+    if(!d.ok)return;
+    videoControls={};
+    (d.controls||[]).forEach(c=>videoControls[c.media_id]=c);
+  }catch(e){console.warn("读取视频控制状态失败",e);}
+}
+function render(){
+  mediaShow.replaceChildren();
+  files.forEach(f=>{
+    const wrap=document.createElement("div");wrap.className="media-item";
+    let el;
+    if(f.type&&f.type.startsWith("image/")){el=document.createElement("img");el.alt="已上传图片";}
+    else if(f.type&&f.type.startsWith("video/")){
+      el=document.createElement("video");el.controls=true;el.preload="metadata";el.playsInline=true;el.dataset.mediaId=f.id;
+      const c=videoControls[f.id]||{is_playing:false,volume:100};
+      el.volume=Math.max(0,Math.min(1,Number(c.volume??100)/100));
+      el.addEventListener("loadedmetadata",()=>applyVideoControl(f.id));
+    }
+    else{return;}
+    el.src=f.url;wrap.appendChild(el);
+    if(f.type&&f.type.startsWith("video/")&&currentUser?.role==="admin"){
+      const c=videoControls[f.id]||{is_playing:false,volume:100};
+      const panel=document.createElement("div");panel.className="video-admin-control";
+      const play=document.createElement("button");play.type="button";play.textContent=c.is_playing?"暂停所有页面":"播放所有页面";
+      play.onclick=()=>setVideoControl(f.id,!Boolean(videoControls[f.id]?.is_playing),Number(videoControls[f.id]?.volume??100));
+      const label=document.createElement("span");label.textContent=` 音量 ${Number(c.volume??100)}% `;
+      const vol=document.createElement("input");vol.type="range";vol.min="0";vol.max="100";vol.value=String(Number(c.volume??100));
+      vol.oninput=()=>{label.textContent=` 音量 ${vol.value}% `;};
+      vol.onchange=()=>setVideoControl(f.id,Boolean(videoControls[f.id]?.is_playing),Number(vol.value));
+      panel.append(play,label,vol);wrap.appendChild(panel);
+    }
+    if(currentUser?.role==="admin"){
+      const del=document.createElement("button");del.className="media-delete";del.type="button";del.textContent="删除";
+      del.onclick=()=>deleteMedia(f.id);wrap.appendChild(del);
+    }
+    mediaShow.appendChild(wrap);
+  });
+}
+async function deleteMedia(id){
+  if(currentUser?.role!=="admin")return;
+  if(!confirm("确定删除这个文件吗？删除后无法恢复。"))return;
+  try{
+    const res=await fetch(`${SUPABASE_URL}/functions/v1/web-media-upload`,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({action:"delete",token:token(),id:Number(id)})
+    });
+    const d=await res.json().catch(()=>({}));
+    if(!res.ok||!d.ok){alert(d.error||`删除失败（HTTP ${res.status}）`);return;}
+    await loadData();
+    if(d.storage_warning)console.warn(d.storage_warning);
+  }catch(e){
+    alert(e?.message||"删除失败");
+  }
+}
+
+async function setVideoControl(id,isPlaying,volume){
+  if(currentUser?.role!=="admin")return;
+  try{
+    const d=await rpc("web_set_video_control",{p_token:token(),p_media_id:Number(id),p_is_playing:Boolean(isPlaying),p_volume:Number(volume)});
+    if(!d.ok){alert(d.error||"控制失败");return;}
+    videoControls[id]={media_id:Number(id),is_playing:Boolean(d.is_playing),volume:Number(d.volume)};
+    applyVideoControl(id);
+    render();
+  }catch(e){alert(e.message||"视频控制失败");}
+}
+function applyVideoControl(id){
+  const c=videoControls[id];if(!c)return;
+  const v=document.querySelector(`video[data-media-id="${id}"]`);if(!v)return;
+  v.volume=Math.max(0,Math.min(1,Number(c.volume??100)/100));
+  if(c.is_playing){v.play().catch(()=>{console.info("浏览器阻止自动播放；用户首次与页面交互后即可播放。")});}
+  else v.pause();
+}
+function startVideoControlRealtime(){
+  if(videoControlChannel)realtimeClient.removeChannel(videoControlChannel);
+  videoControlChannel=realtimeClient.channel("web-video-controls-live")
+    .on("postgres_changes",{event:"*",schema:"public",table:"web_video_controls"},async(payload)=>{
+      if(payload.eventType==="DELETE"){delete videoControls[payload.old?.media_id];return;}
+      const c=payload.new;if(!c?.media_id)return;videoControls[c.media_id]=c;applyVideoControl(c.media_id);
+      if(currentUser?.role==="admin")render();
+    }).subscribe();
+}
+
+function startRealtime(){
+  if(realtimeChannel)realtimeClient.removeChannel(realtimeChannel);
+  realtimeChannel=realtimeClient
+    .channel("web-media-live")
+    .on("postgres_changes",{event:"*",schema:"public",table:"web_media"},async()=>{
+      try{await loadData();}catch(e){console.warn("实时刷新失败",e);}
+    })
+    .subscribe();
+  startVideoControlRealtime();
+}
+function showAdmin(){admin.style.display="block";adminList.textContent="当前文件数量："+files.length;}
+function hideAdmin(){admin.style.display="none";}
+function fileData(file,cb){const r=new FileReader();r.onload=e=>cb(e.target.result);r.readAsDataURL(file);}
+async function upload(){
+  const file=uploadInput.files[0]; if(!file)return;
+  if(!(file.type.startsWith("image/")||file.type.startsWith("video/"))){alert("只支持图片或视频文件");uploadInput.value="";return;}
+  if(file.size>50*1024*1024){alert("文件不能超过50MB");return;}
+  try{
+    const fd=new FormData();
+    fd.append("token",token());
+    fd.append("file",file,file.name);
+    const res=await fetch(`${SUPABASE_URL}/functions/v1/web-media-upload`,{method:"POST",body:fd});
+    const d=await res.json();
+    if(!res.ok||!d.ok){alert(d.error||"上传失败");return;}
+    uploadInput.value="";
+    await loadData();
+    if(admin.style.display==="block")adminList.textContent="当前文件数量："+files.length;
+  }catch(e){alert(e.message||"上传失败");}
+}
+function setBackground(){
+  const f=bgInput.files[0];if(!f)return;if(!f.type.startsWith("image/")){alert("背景只能选择图片文件");bgInput.value="";return;}
+  fileData(f,async url=>{try{const d=await rpc("web_set_background",{p_token:token(),p_background:url});if(!d.ok){alert(d.error);return;}document.body.style.backgroundImage=`url(${url})`;bgInput.value="";}catch(e){alert(e.message);}});
+}
+async function setOpacity(){
+  let value=Number(opacityInput.value);if(!Number.isFinite(value)){alert("请输入 1 到 100 之间的数字");return;}value=Math.max(1,Math.min(100,value));
+  try{const d=await rpc("web_set_opacity",{p_token:token(),p_opacity:value});if(!d.ok){alert(d.error);return;}opacityInput.value=d.opacity;document.getElementById("app").style.opacity=d.opacity/100;}catch(e){alert(e.message);}
+}
+
+async function changeAdminPassword(){
+  if(currentUser?.role!=="admin"){alert("只有最高权限账户可以修改密码");return;}
+  const oldPwd=currentPwd.value;
+  const nextPwd=newPwd.value;
+  const again=confirmPwd.value;
+  if(!oldPwd||!nextPwd||!again){alert("请完整填写当前密码和新密码");return;}
+  if(nextPwd.length<8){alert("新密码至少需要8位");return;}
+  if(nextPwd!==again){alert("两次输入的新密码不一致");return;}
+  if(oldPwd===nextPwd){alert("新密码不能与当前密码相同");return;}
+  try{
+    const d=await rpc("web_change_password",{
+      p_token:token(),
+      p_current_password:oldPwd,
+      p_new_password:nextPwd
+    });
+    if(!d.ok){alert(d.error||"修改密码失败");return;}
+    currentPwd.value="";newPwd.value="";confirmPwd.value="";
+    localStorage.removeItem("webSessionToken");
+    alert("密码修改成功，请使用新密码重新登录");
+    location.reload();
+  }catch(e){
+    alert(e.message||"修改密码失败");
+  }
+}
+async function logout(){try{if(token())await rpc("web_logout",{p_token:token()});}catch(e){}localStorage.removeItem("webSessionToken");location.reload();}
+window.addEventListener("load",async()=>{
+  if(!token())return;
+  try{const d=await rpc("web_session",{p_token:token()});if(!d.ok){localStorage.removeItem("webSessionToken");return;}showUser(d.user);await loadData();startRealtime();}
+  catch(e){message.textContent="数据库连接失败："+e.message;}
+});
+</script>
+
+</body>
+</html>
