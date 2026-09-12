@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>网页管理系统</title>
+<style>
+body{margin:0;font-family:Microsoft YaHei,Arial;background:#ddd}
+#app{min-height:100vh;background:rgba(255,255,255,.85)}
+header{background:#222;color:#fff;padding:15px;display:flex;justify-content:space-between}
+.area{margin:15px;padding:20px;background:#fff;border-radius:10px;min-height:100px}
+button{padding:8px;margin:3px;background:#1677ff;color:white;border:0;border-radius:5px}
+input{padding:8px;margin:5px;width:90%}
+#loginBox{position:fixed;inset:0;background:#0008;display:flex;align-items:center;justify-content:center;z-index:99}
+.panel,#admin{background:#fff;padding:20px;border-radius:10px}
+#admin{display:none;position:fixed;right:20px;top:70px;width:350px;z-index:100;max-height:80vh;overflow:auto}
+img,video{max-width:250px;margin:5px}
+</style>
+</head>
+<body>
+<div id="loginBox"><div class="panel">
+<h2>用户登录</h2>
+<input id="loginName" placeholder="账号">
+<input id="loginPwd" type="password" placeholder="密码">
+<button onclick="login()">登录</button>
+<h3>注册</h3>
+<input id="regName" placeholder="新账号">
+<input id="regPwd" type="password" placeholder="密码">
+<button onclick="register()">注册</button>
+<div id="message"></div>
+</div></div>
+
+<div id="app">
+<header>
+<div>我的网页</div>
+<div><span id="userShow"></span><button id="adminBtn" style="display:none" onclick="showAdmin()">后台</button></div>
+</header>
+
+<div class="area"><h2>上区</h2></div>
+<div class="area"><h2>中区</h2><div id="mediaShow"></div></div>
+<div class="area"><h2>下区</h2></div>
+</div>
+
+<div id="admin">
+<h2>最高权限后台</h2>
+<button onclick="hideAdmin()">关闭</button>
+<hr>
+<p>最高权限账户可在此修改网页内容</p>
+<input id="bgInput" type="file">
+<button onclick="setBackground()">修改背景</button>
+<br>
+<input id="opacityInput" type="number" value="85">
+<button onclick="setOpacity()">透明度</button>
+<hr>
+<input id="uploadInput" type="file" accept="image/*,video/*">
+<button onclick="upload()">上传图片/视频</button>
+<div id="adminList"></div>
+<hr>
+<input id="newGame" placeholder="小游戏名称">
+<button onclick="addGame()">添加小游戏</button>
+<div id="gameList"></div>
+</div>
+
+<script>
+const ADMIN={name:"306680070",pwd:"Aa112211",role:"admin"};
+let users=JSON.parse(localStorage.getItem("users")||"[]");
+let files=JSON.parse(localStorage.getItem("files")||"[]");
+let games=JSON.parse(localStorage.getItem("games")||"[]");
+
+function register(){
+let n=document.getElementById("regName").value;
+let p=document.getElementById("regPwd").value;
+if(n&&p){users.push({name:n,pwd:p,role:"user"});localStorage.users=JSON.stringify(users);alert("注册成功")}
+}
+function login(){
+let n=document.getElementById("loginName").value;
+let p=document.getElementById("loginPwd").value;
+let u=(n===ADMIN.name&&p===ADMIN.pwd)?ADMIN:users.find(x=>x.name===n&&x.pwd===p);
+if(!u){message.innerHTML="账号密码错误";return}
+loginBox.style.display="none";
+userShow.innerHTML="用户:"+u.name;
+if(u.role==="admin")adminBtn.style.display="inline-block";
+render();
+}
+function render(){
+mediaShow.innerHTML="";
+files.forEach(x=>{
+mediaShow.innerHTML+=x.type.startsWith("image")?`<img src="${x.url}">`:`<video controls src="${x.url}"></video>`;
+});
+}
+function showAdmin(){admin.style.display="block";adminRender()}
+function hideAdmin(){admin.style.display="none"}
+function upload(){
+let f=document.getElementById("uploadInput").files[0];if(!f)return;
+let r=new FileReader();
+r.onload=e=>{files.push({url:e.target.result,type:f.type});localStorage.files=JSON.stringify(files);render();adminRender()};
+r.readAsDataURL(f);
+}
+function adminRender(){adminList.innerHTML="媒体数量:"+files.length;gameList.innerHTML=games.join("<br>")}
+function setBackground(){
+let f=bgInput.files[0];if(!f)return;
+let r=new FileReader();r.onload=e=>document.body.style.backgroundImage=`url(${e.target.result})`;r.readAsDataURL(f)
+}
+function setOpacity(){app.style.background=`rgba(255,255,255,${opacityInput.value/100})`}
+function addGame(){if(newGame.value){games.push(newGame.value);localStorage.games=JSON.stringify(games);adminRender()}}
+</script>
+</body>
+</html>
