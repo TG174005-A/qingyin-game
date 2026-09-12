@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>恋恋空间 Ultimate 优化版</title>
+<style>
+*{box-sizing:border-box;font-family:"Microsoft YaHei"}
+body{margin:0;padding:12px;min-height:100vh;background:#fff5f8;background-size:cover;background-position:center}
+.box{max-width:1100px;margin:12px auto;padding:20px;border-radius:18px;background:rgba(255,255,255,.92)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.card{padding:15px;border:1px solid #ffc0d0;border-radius:12px;background:white}
+button{width:100%;padding:12px;margin:5px 0;border:0;border-radius:10px}
+input,textarea,select{width:100%;padding:12px;margin:5px 0}
+.hide{display:none}
+@media(max-width:600px){.box{padding:14px}}
+</style>
+</head>
+<body>
+
+<div class="box" id="loginPage">
+<h1>💕 恋恋空间</h1>
+<input id="loginAccount" placeholder="账号">
+<input id="loginPassword" type="password" placeholder="密码">
+<input id="registerName" placeholder="注册昵称">
+<button onclick="login()">登录</button>
+<button onclick="register()">注册</button>
+</div>
+
+<div class="box hide" id="homePage">
+<h2 id="homeTitle">欢迎来到恋恋空间</h2>
+<p id="currentUser"></p>
+<button id="adminEntry" class="hide" onclick="openAdmin()">👑最高权限控制台</button>
+<div id="showComponents" class="grid"></div>
+</div>
+
+<div class="box hide" id="adminPage">
+<h2>👑最高权限中心</h2>
+
+<h3>主页设置</h3>
+<input id="siteTitle" placeholder="主页标题">
+<input type="file" id="bgUpload" accept="image/*">
+<input id="alpha" placeholder="透明度 0-1">
+<button onclick="saveHome()">保存主页设置</button>
+
+<h3>组件管理</h3>
+<select id="componentType">
+<option>🎮游戏</option>
+<option>🎬视频</option>
+<option>📷照片</option>
+<option>💬信息</option>
+</select>
+<input id="componentName" placeholder="组件名称">
+<textarea id="componentValue" placeholder="组件内容"></textarea>
+<input type="file" id="componentFile">
+<button onclick="createComponent()">新增组件</button>
+
+<h3>系统</h3>
+<button onclick="clearComponents()">清空组件</button>
+<button onclick="clearUsers()">删除普通用户</button>
+<button onclick="closeAdmin()">返回主页</button>
+</div>
+
+<script>
+const ADMIN={account:"306680070",password:"Aa112211",role:"admin"};
+let currentUserData=null;
+
+function getUsers(){return JSON.parse(localStorage.getItem("users")||"[]")}
+function setUsers(v){localStorage.setItem("users",JSON.stringify(v))}
+
+function init(){
+let u=getUsers();
+if(!u.some(x=>x.account===ADMIN.account)){
+u.push({account:ADMIN.account,password:ADMIN.password,nickname:"超级管理员",role:"admin"});
+setUsers(u);
+}}
+init();
+
+function register(){
+let u=getUsers();
+if(!loginAccount.value||!loginPassword.value){alert("请输入账号密码");return}
+if(u.some(x=>x.account===loginAccount.value)){alert("账号已存在");return}
+u.push({account:loginAccount.value,password:loginPassword.value,nickname:registerName.value||"用户",role:"user"});
+setUsers(u);
+alert("注册成功");
+}
+
+function login(){
+let u=getUsers().find(x=>x.account===loginAccount.value&&x.password===loginPassword.value);
+if(!u){alert("账号或密码错误");return}
+currentUserData=u;
+loginPage.classList.add("hide");
+homePage.classList.remove("hide");
+currentUser.innerText="当前用户："+u.nickname;
+adminEntry.classList.toggle("hide",u.role!=="admin");
+render();
+loadHome();
+}
+
+function openAdmin(){if(currentUserData&&currentUserData.role==="admin")adminPage.classList.remove("hide")}
+function closeAdmin(){adminPage.classList.add("hide")}
+
+function getComponents(){return JSON.parse(localStorage.getItem("components")||"[]")}
+function saveComponents(v){localStorage.setItem("components",JSON.stringify(v))}
+
+function createComponent(){
+let arr=getComponents();
+arr.push({type:componentType.value,name:componentName.value,value:componentValue.value});
+saveComponents(arr);
+render();
+}
+
+function render(){
+showComponents.innerHTML="";
+getComponents().forEach((c,i)=>{
+showComponents.innerHTML+=`<div class="card"><h3>${c.type}</h3><b>${c.name}</b><p>${c.value}</p>${currentUserData&&currentUserData.role==="admin"?'<button onclick="removeComponent('+i+')">删除</button>':''}</div>`;
+});
+}
+
+function removeComponent(i){
+let arr=getComponents();arr.splice(i,1);saveComponents(arr);render();
+}
+
+function saveHome(){
+let data={title:siteTitle.value,alpha:alpha.value};
+let f=bgUpload.files[0];
+if(f){
+let r=new FileReader();
+r.onload=()=>{data.bg=r.result;localStorage.setItem("home",JSON.stringify(data));loadHome()};
+r.readAsDataURL(f);
+}else{
+localStorage.setItem("home",JSON.stringify(data));loadHome();
+}}
+
+function loadHome(){
+let h=JSON.parse(localStorage.getItem("home")||"{}");
+if(h.title)homeTitle.innerText=h.title;
+if(h.bg)document.body.style.backgroundImage="url("+h.bg+")";
+if(h.alpha)homePage.style.background="rgba(255,255,255,"+h.alpha+")";
+}
+
+function clearComponents(){localStorage.removeItem("components");render()}
+function clearUsers(){setUsers([{account:ADMIN.account,password:ADMIN.password,nickname:"超级管理员",role:"admin"}]);alert("普通用户已删除")}
+</script>
+</body>
+</html>
