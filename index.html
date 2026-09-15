@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>CYBER AI FINAL INTEGRATED V4 BACKGROUND FIX</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.8"></script>
+<style>
+body{margin:0;min-height:100vh;background:#020617;color:white;font-family:Arial}
+#loginBox,#homeBox,#panel{background-size:cover;background-position:center}
+#adminBtn{display:none;position:fixed;right:20px;top:20px}
+#panel{display:none;position:fixed;inset:5%;padding:25px;background-color:#ffffff22;border:1px solid #00ffff;border-radius:25px}
+button,input{padding:8px;margin:5px}
+</style>
+</head>
+<body>
+
+<button id="adminBtn" onclick="openAdmin()">后台管理</button>
+
+<div id="loginBox">
+<h1>CYBER AI</h1>
+<input id="account" placeholder="账号">
+<input id="password" type="password" placeholder="密码">
+<button onclick="login()">登录</button>
+</div>
+
+<div id="homeBox" style="display:none">
+<h1>CYBER AI 主页面</h1>
+<p id="info"></p>
+</div>
+
+<div id="panel">
+<button onclick="closeAdmin()">关闭</button>
+<h2>后台</h2>
+<input id="bgFile" type="file">
+<select id="bgType">
+<option value="login_background">登录背景</option>
+<option value="home_background">主页背景</option>
+<option value="admin_background">后台背景</option>
+</select>
+<button onclick="uploadBg()">保存背景</button>
+</div>
+
+<script>
+const db=supabase.createClient(
+"https://mqvxghfcglyrfnqmjtwd.supabase.co",
+"sb_publishable_YnQaAZSQZ3qhWwIovqaqWQ_uJNRwUrb"
+);
+
+let role="";
+
+async function login(){
+let {data}=await db.rpc("login_numeric_account",{
+input_username:account.value.trim(),
+input_password:password.value
+});
+
+if(data&&data.success){
+role=data.role;
+loginBox.style.display="none";
+homeBox.style.display="block";
+info.innerHTML=data.username+" / "+role;
+if(role==="superadmin")adminBtn.style.display="block";
+loadBackground();
+}
+}
+
+function openAdmin(){
+if(role==="superadmin"){
+panel.style.display="block";
+loadBackground();
+}
+}
+
+function closeAdmin(){
+panel.style.display="none";
+}
+
+async function uploadBg(){
+let file=bgFile.files[0];
+if(!file)return;
+
+let path="backgrounds/"+Date.now()+"_"+file.name;
+
+let {error}=await db.storage
+.from("backgrounds")
+.upload(path,file,{upsert:true});
+
+if(error){
+alert(error.message);
+return;
+}
+
+let {data:url}=db.storage
+.from("backgrounds")
+.getPublicUrl(path);
+
+await db.from("system_settings")
+.update({
+[bgType.value]:url.publicUrl,
+updated_at:new Date()
+})
+.eq("id",1);
+
+alert("背景保存成功");
+}
+
+async function loadBackground(){
+
+let {data}=await db
+.from("system_settings")
+.select("*")
+.eq("id",1)
+.single();
+
+if(!data)return;
+
+if(data.login_background)
+loginBox.style.backgroundImage="url("+data.login_background+")";
+
+if(data.home_background)
+homeBox.style.backgroundImage="url("+data.home_background+")";
+
+if(data.admin_background)
+panel.style.backgroundImage="url("+data.admin_background+")";
+
+if(data.opacity){
+loginBox.style.opacity=data.opacity/100;
+homeBox.style.opacity=data.opacity/100;
+panel.style.opacity=data.opacity/100;
+}
+}
+
+db.channel("background-fix-v4")
+.on("postgres_changes",
+{
+event:"*",
+schema:"public",
+table:"system_settings"
+},
+()=>loadBackground()
+)
+.subscribe();
+
+loadBackground();
+</script>
+</body>
+</html>
