@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>CYBER AI FINAL COMPLETE ADMIN ALL</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.8"></script>
+<style>
+body{margin:0;min-height:100vh;background:#020617;color:white;font-family:Arial;background-size:cover;background-position:center}
+#adminBtn{display:none;position:fixed;right:25px;top:25px;padding:12px 30px;border-radius:30px;background:#ffffff18;color:#00ffff;border:2px solid #00ffff}
+.box{text-align:center;padding-top:180px}
+#adminPanel{display:none;position:fixed;inset:6%;padding:30px;background:#ffffff22;backdrop-filter:blur(25px);border:1px solid #00ffff;border-radius:30px;overflow:auto}
+button,input,select{padding:10px;margin:5px;border-radius:15px;background:#ffffff18;color:white;border:1px solid #00ffff}
+.tab{display:none}.active{display:block}
+table{width:100%;border-collapse:collapse}td,th{padding:10px;border-bottom:1px solid #ffffff33}
+</style>
+</head>
+<body>
+
+<button id="adminBtn">后台管理</button>
+
+<div class="box" id="loginBox">
+<h1>CYBER AI</h1>
+<input id="account" placeholder="数字账号">
+<input id="password" type="password" placeholder="密码"><br>
+<button onclick="login()">登录</button>
+<button onclick="register()">注册</button>
+<p id="msg"></p>
+</div>
+
+<div class="box" id="home" style="display:none">
+<h1>CYBER AI</h1>
+<p id="info"></p>
+</div>
+
+<div id="adminPanel">
+<button onclick="closeAdmin()">关闭</button>
+<h2>CYBER AI 后台</h2>
+<button onclick="showTab('users')">用户管理</button>
+<button onclick="showTab('logs')">操作日志</button>
+<button onclick="showTab('loginLogs')">登录记录</button>
+<button onclick="showTab('settings')">系统设置</button>
+
+<div id="users" class="tab active">
+<h3>用户管理</h3>
+<table><tbody id="userList"></tbody></table>
+</div>
+
+<div id="logs" class="tab">
+<h3>操作日志</h3>
+<div id="logList"></div>
+</div>
+
+<div id="loginLogs" class="tab">
+<h3>登录记录</h3>
+<div id="loginList"></div>
+</div>
+
+<div id="settings" class="tab">
+<h3>背景设置</h3>
+<input id="bgColor" type="color">
+<input id="bgFile" type="file" accept="image/*">
+<input id="opacity" type="range" min="30" max="100" value="60">
+<button onclick="saveBackground()">保存</button>
+</div>
+
+</div>
+
+<script>
+const db=supabase.createClient(
+"https://mqvxghfcglyrfnqmjtwd.supabase.co",
+"sb_publishable_YnQaAZSQZ3qhWwIovqaqWQ_uJNRwUrb"
+);
+
+let bgImage="";
+
+function showTab(id){
+document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+document.getElementById(id).classList.add("active");
+}
+
+async function login(){
+let {data,error}=await db.rpc("login_numeric_account",{
+input_username:account.value.trim(),
+input_password:password.value
+});
+if(error){msg.innerHTML=error.message;return}
+if(data&&data.success){
+loginBox.style.display="none";
+home.style.display="block";
+info.innerHTML="账号："+data.username+" 权限："+data.role;
+if(data.role==="superadmin"){
+adminBtn.style.display="block";
+adminBtn.onclick=openAdmin;
+}
+}
+}
+
+async function register(){
+let {data,error}=await db.rpc("register_numeric_account",{
+input_username:account.value.trim(),
+input_password:password.value
+});
+if(error){msg.innerHTML=error.message;return}
+if(data&&data.success) login();
+}
+
+async function openAdmin(){
+let {data}=await db.rpc("login_numeric_account",{
+input_username:account.value.trim(),
+input_password:password.value
+});
+if(!data||data.role!=="superadmin")return;
+adminPanel.style.display="block";
+loadAll();
+}
+
+function closeAdmin(){adminPanel.style.display="none"}
+
+async function loadAll(){
+let u=await db.rpc("get_all_accounts");
+userList.innerHTML="";
+(u.data||[]).forEach(x=>{
+userList.innerHTML+=`
+<tr>
+<td>${x.username}</td>
+<td>
+<select id="role_${x.id}">
+<option ${x.role==="user"?"selected":""}>user</option>
+<option ${x.role==="admin"?"selected":""}>admin</option>
+<option ${x.role==="superadmin"?"selected":""}>superadmin</option>
+</select>
+</td>
+<td>
+<button onclick="saveRole('${x.id}','${x.username}','${x.role}')">保存</button>
+${x.username==="306680070"?"保护":`<button onclick="deleteUser('${x.id}','${x.username}')">删除</button>`}
+</td>
+</tr>`;
+});
+
+let l=await db.rpc("get_admin_logs");
+logList.innerHTML=JSON.stringify(l.data||[]);
+
+let ll=await db.rpc("get_login_logs");
+loginList.innerHTML=JSON.stringify(ll.data||[]);
+}
+
+async function saveRole(id,name,oldRole){
+let role=document.getElementById("role_"+id).value;
+await db.rpc("protect_superadmin",{account_id:id,new_role:role});
+await db.rpc("add_admin_log",{p_operator:"306680070",p_action:"UPDATE_ROLE",p_target:name,p_old:oldRole,p_new:role});
+loadAll();
+}
+
+async function deleteUser(id,name){
+if(!confirm("删除 "+name+" ?"))return;
+await db.rpc("delete_account",{account_id:id});
+await db.rpc("add_admin_log",{p_operator:"306680070",p_action:"DELETE_USER",p_target:name,p_old:"",p_new:""});
+loadAll();
+}
+
+bgFile.onchange=e=>{
+let r=new FileReader();
+r.onload=()=>{bgImage=r.result;document.body.style.backgroundImage="url("+bgImage+")"};
+r.readAsDataURL(e.target.files[0]);
+}
+
+async function saveBackground(){
+await db.from("system_settings").upsert({
+id:1,
+background_color:bgColor.value,
+background_image:bgImage,
+opacity:Number(opacity.value)
+});
+alert("背景保存成功");
+}
+
+</script>
+</body>
+</html>
