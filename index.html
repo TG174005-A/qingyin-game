@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>CYBER AI FINAL INTEGRATED V3 COMPLETE</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.8"></script>
+<style>
+body{margin:0;min-height:100vh;background:#020617;color:white;font-family:Arial;background-size:cover;background-position:center}
+#adminBtn{display:none;position:fixed;right:20px;top:20px}
+#panel{display:none;position:fixed;inset:5%;padding:25px;background:#ffffff22;backdrop-filter:blur(20px);border:1px solid #00ffff;border-radius:25px;overflow:auto}
+.area{position:absolute;border:1px solid #00ffff;background:#ffffff15;padding:10px}
+.area img,.area video{width:100%;height:100%;object-fit:cover}
+button,input,select{padding:8px;margin:5px;background:#ffffff18;color:white;border:1px solid #00ffff;border-radius:12px}
+table{width:100%}
+</style>
+</head>
+<body>
+
+<button id="adminBtn" onclick="openAdmin()">后台管理</button>
+
+<div id="loginBox" style="text-align:center;padding-top:180px">
+<h1>CYBER AI</h1>
+<input id="account" placeholder="账号">
+<input id="password" type="password" placeholder="密码">
+<br>
+<button onclick="login()">登录</button>
+<button onclick="register()">注册</button>
+<p id="msg"></p>
+</div>
+
+<div id="homeBox" style="display:none;text-align:center">
+<h1>CYBER AI</h1>
+<p id="info"></p>
+</div>
+
+<div id="panel">
+<button onclick="closeAdmin()">关闭</button>
+<h2>完整后台</h2>
+
+<h3>用户管理</h3>
+<div id="users"></div>
+
+<h3>日志</h3>
+<div id="logs"></div>
+
+<h3>登录记录</h3>
+<div id="loginLogs"></div>
+
+<h3>三背景 Storage</h3>
+<input id="bgFile" type="file">
+<select id="bgType">
+<option value="login_background">登录背景</option>
+<option value="home_background">主页背景</option>
+<option value="admin_background">后台背景</option>
+</select>
+<button onclick="uploadBg()">保存</button>
+
+<h3>布局</h3>
+<input id="areaName" placeholder="区域名称">
+<input id="areaW" placeholder="宽">
+<input id="areaH" placeholder="高">
+<button onclick="createArea()">创建</button>
+
+<h3>视频控制</h3>
+<button onclick="videoCmd('PLAY_ALL')">播放全部</button>
+<button onclick="videoCmd('PAUSE_ALL')">暂停全部</button>
+</div>
+
+<script>
+const db=supabase.createClient(
+"https://mqvxghfcglyrfnqmjtwd.supabase.co",
+"sb_publishable_YnQaAZSQZ3qhWwIovqaqWQ_uJNRwUrb"
+);
+
+let role="",currentUser="";
+
+async function login(){
+let {data,error}=await db.rpc("login_numeric_account",{input_username:account.value.trim(),input_password:password.value});
+if(error||!data?.success){msg.innerHTML="登录失败";return}
+role=data.role;currentUser=data.username;
+loginBox.style.display="none";homeBox.style.display="block";
+info.innerHTML=currentUser+" / "+role;
+if(role==="superadmin")adminBtn.style.display="block";
+renderLayout();loadSettings();
+}
+
+async function register(){
+let {data,error}=await db.rpc("register_numeric_account",{input_username:account.value.trim(),input_password:password.value});
+if(error)msg.innerHTML=error.message;else login();
+}
+
+function openAdmin(){if(role==="superadmin"){panel.style.display="block";loadAdmin();}}
+function closeAdmin(){panel.style.display="none"}
+
+async function loadAdmin(){
+let u=await db.rpc("get_all_accounts");
+users.innerHTML=JSON.stringify(u.data||[]);
+let a=await db.rpc("get_admin_logs");
+logs.innerHTML=JSON.stringify(a.data||[]);
+let l=await db.rpc("get_login_logs");
+loginLogs.innerHTML=JSON.stringify(l.data||[]);
+}
+
+async function deleteUser(id){
+await db.rpc("delete_account",{account_id:id});
+await db.rpc("add_admin_log",{p_operator:currentUser,p_action:"DELETE_USER",p_target:id});
+}
+
+async function changeRole(id,role){
+await db.rpc("protect_superadmin",{account_id:id,new_role:role});
+}
+
+async function uploadBg(){
+let f=bgFile.files[0];if(!f)return;
+let path="background/"+Date.now()+"_"+f.name;
+let {error}=await db.storage.from("backgrounds").upload(path,f,{upsert:true});
+if(error){msg.innerHTML=error.message;return}
+let {data}=db.storage.from("backgrounds").getPublicUrl(path);
+await db.from("system_settings").update({
+[bgType.value]:data.publicUrl,
+updated_at:new Date()
+}).eq("id",1);
+}
+
+async function createArea(){
+await db.from("custom_layouts").insert({
+name:areaName.value||"",
+width:Number(areaW.value)||200,
+height:Number(areaH.value)||100,
+x:50,y:50,
+updated_at:new Date()
+});
+}
+
+async function renderLayout(){
+let {data}=await db.from("custom_layouts").select("*");
+document.querySelectorAll(".area").forEach(e=>e.remove());
+(data||[]).forEach(a=>{
+let d=document.createElement("div");
+d.className="area";
+d.style.width=a.width+"px";
+d.style.height=a.height+"px";
+d.style.left=a.x+"px";
+d.style.top=a.y+"px";
+d.innerHTML=a.content?`<img src="${a.content}">`:a.name;
+document.body.appendChild(d);
+});
+}
+
+async function loadSettings(){
+let {data}=await db.from("system_settings").select("*").eq("id",1).single();
+if(!data)return;
+let bg=data.home_background||data.login_background;
+if(bg)document.body.style.backgroundImage="url("+bg+")";
+}
+
+async function videoCmd(c){
+await db.from("layout_controls").upsert({id:1,command:c,updated_at:new Date()});
+}
+
+db.channel("cyber-v3-final")
+.on("postgres_changes",{event:"*",schema:"public",table:"system_settings"},loadSettings)
+.on("postgres_changes",{event:"*",schema:"public",table:"account_store"},loadAdmin)
+.on("postgres_changes",{event:"*",schema:"public",table:"admin_logs"},loadAdmin)
+.on("postgres_changes",{event:"*",schema:"public",table:"login_logs"},loadAdmin)
+.on("postgres_changes",{event:"*",schema:"public",table:"custom_layouts"},renderLayout)
+.on("postgres_changes",{event:"*",schema:"public",table:"layout_controls"},p=>{
+document.querySelectorAll("video").forEach(v=>{
+if(p.new?.command==="PLAY_ALL")v.play();
+if(p.new?.command==="PAUSE_ALL")v.pause();
+});
+})
+.subscribe();
+
+</script>
+</body>
+</html>
