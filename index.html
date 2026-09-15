@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>CYBER AI FINAL RELEASE COMPLETE V15 FINAL FIX</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.8"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:#020617;color:white;font-family:Arial;background-size:cover;background-position:center}
+button,input,select{padding:10px;margin:5px;border-radius:12px;background:#ffffff18;color:white;border:1px solid #00ffff}
+#adminBtn{display:none;position:fixed;right:20px;top:20px}
+#panel{display:none;position:fixed;inset:3%;overflow:auto;padding:20px;background:#111d;border:1px solid #00ffff}
+.area{position:absolute;border:1px solid #00ffff;background:#ffffff18;cursor:move;resize:both;overflow:hidden}
+.area img,.area video{width:100%;height:100%;object-fit:cover}
+</style>
+</head>
+<body>
+
+<button id="adminBtn" onclick="openAdmin()">后台管理</button>
+
+<div id="loginBox">
+<h1>CYBER AI</h1>
+<input id="account" placeholder="数字账号">
+<input id="password" type="password" placeholder="密码">
+<button onclick="login()">登录</button>
+<button onclick="register()">注册</button>
+</div>
+
+<div id="homeBox" style="display:none">
+<h1>CYBER AI</h1>
+<div id="info"></div>
+</div>
+
+<div id="panel">
+<button onclick="closeAdmin()">关闭</button>
+<h2>用户权限后台</h2>
+<div id="users"></div>
+<div id="logs"></div>
+<input id="bgFile" type="file">
+<select id="bgType">
+<option value="login_background">登录背景</option>
+<option value="home_background">主页背景</option>
+<option value="admin_background">后台背景</option>
+</select>
+<button onclick="uploadBg()">保存背景</button>
+<input id="mediaFile" type="file" accept="image/*,video/*">
+<button onclick="uploadMedia()">上传媒体</button>
+<button onclick="cmd('PLAY_ALL')">播放全部</button>
+<button onclick="cmd('PAUSE_ALL')">暂停全部</button>
+<button onclick="cmd('DELETE_ALL')">删除全部</button>
+</div>
+
+<script>
+const db=supabase.createClient(
+"https://mqvxghfcglyrfnqmjtwd.supabase.co",
+"sb_publishable_YnQaAZSQZ3qhWwIovqaqWQ_uJNRwUrb"
+);
+
+let role="",currentUser="";
+
+async function login(){
+let {data}=await db.rpc("login_numeric_account",{input_username:account.value.trim(),input_password:password.value});
+if(!data?.success)return;
+role=data.role;currentUser=data.username;
+loginBox.style.display="none";
+homeBox.style.display="block";
+info.innerHTML=currentUser+" / "+role;
+if(role==="superadmin")adminBtn.style.display="block";
+refreshAll();
+}
+
+async function register(){
+await db.rpc("register_numeric_account",{input_username:account.value.trim(),input_password:password.value});
+login();
+}
+
+function openAdmin(){panel.style.display="block";refreshAll()}
+function closeAdmin(){panel.style.display="none"}
+
+async function refreshAll(){
+let {data}=await db.rpc("get_all_accounts");
+users.innerHTML="<table>"+(data||[]).map(u=>`<tr><td>${u.username}</td><td>${u.role}</td><td><button onclick="changeRole('${u.id}','admin')">admin</button><button onclick="changeRole('${u.id}','user')">user</button><button onclick="removeUser('${u.id}')">删除</button></td></tr>`).join("")+"</table>";
+let l=await db.rpc("get_admin_logs");
+logs.innerHTML=JSON.stringify(l.data||[]);
+loadSettings();
+renderLayout();
+}
+
+async function writeLog(action,target){
+await db.rpc("add_admin_log",{p_operator:currentUser,p_action:action,p_target:target});
+}
+
+async function changeRole(id,r){
+await db.rpc("protect_superadmin",{account_id:id,new_role:r});
+await writeLog("UPDATE_ROLE",id);
+}
+
+async function removeUser(id){
+if(confirm("确认删除")){
+await db.rpc("delete_account",{account_id:id});
+await writeLog("DELETE_USER",id);
+}
+}
+
+async function uploadBg(){
+let f=bgFile.files[0];if(!f)return;
+let p="backgrounds/"+Date.now()+"_"+f.name;
+await db.storage.from("backgrounds").upload(p,f,{upsert:true});
+let u=db.storage.from("backgrounds").getPublicUrl(p);
+await db.from("system_settings").update({[bgType.value]:u.data.publicUrl}).eq("id",1);
+}
+
+async function loadSettings(){
+let {data}=await db.from("system_settings").select("*").eq("id",1).single();
+if(!data)return;
+if(data.login_background)loginBox.style.backgroundImage=`url(${data.login_background})`;
+if(data.home_background)homeBox.style.backgroundImage=`url(${data.home_background})`;
+if(data.admin_background)panel.style.backgroundImage=`url(${data.admin_background})`;
+}
+
+async function uploadMedia(){
+let f=mediaFile.files[0];if(!f)return;
+let p="media/"+Date.now()+"_"+f.name;
+await db.storage.from("media").upload(p,f,{upsert:true});
+let url=db.storage.from("media").getPublicUrl(p).data.publicUrl;
+let type=f.type.startsWith("video")?"video":"image";
+await db.from("media_playlist").insert({type,url});
+await db.from("custom_layouts").insert({name:f.name,type,content:url,width:300,height:200,x:50,y:50});
+}
+
+async function renderLayout(){
+let {data}=await db.from("custom_layouts").select("*");
+document.querySelectorAll(".area").forEach(e=>e.remove());
+(data||[]).forEach(a=>{
+let d=document.createElement("div");
+d.className="area";
+d.style.left=a.x+"px";d.style.top=a.y+"px";
+d.style.width=a.width+"px";d.style.height=a.height+"px";
+if(a.type==="video")d.innerHTML=`<video controls src="${a.content}"></video>`;
+else if(a.type==="image")d.innerHTML=`<img src="${a.content}">`;
+else d.innerHTML=a.name||"区域";
+dragSave(d,a.id);
+document.body.appendChild(d);
+});
+}
+
+function dragSave(el,id){
+let down=false,ox,oy;
+el.onmousedown=e=>{down=true;ox=e.clientX-el.offsetLeft;oy=e.clientY-el.offsetTop};
+document.onmousemove=e=>{if(down){el.style.left=e.clientX-ox+"px";el.style.top=e.clientY-oy+"px"}};
+document.onmouseup=async()=>{
+if(down){
+down=false;
+await db.from("custom_layouts").update({x:parseInt(el.style.left),y:parseInt(el.style.top),width:el.offsetWidth,height:el.offsetHeight}).eq("id",id);
+}};
+}
+
+async function renderMedia(){
+let {data}=await db.from("media_playlist").select("*");
+if(!data)return;
+
+document.querySelectorAll("[data-media-area]").forEach(e=>e.remove());
+
+function dragMediaSave(el,id){
+let down=false,ox=0,oy=0;
+
+el.onmousedown=e=>{
+down=true;
+ox=e.clientX-el.offsetLeft;
+oy=e.clientY-el.offsetTop;
+};
+
+document.onmousemove=e=>{
+if(down){
+el.style.left=(e.clientX-ox)+"px";
+el.style.top=(e.clientY-oy)+"px";
+}
+};
+
+document.onmouseup=async()=>{
+if(down){
+down=false;
+await db.from("media_playlist").update({
+x:parseInt(el.style.left),
+y:parseInt(el.style.top),
+width:el.offsetWidth,
+height:el.offsetHeight
+}).eq("id",id);
+}
+};
+}
+
+
+data.forEach((m,index)=>{
+let d=document.createElement("div");
+d.className="area";
+d.dataset.mediaArea="true";
+
+let col=index%4;
+let row=Math.floor(index/4);
+
+d.style.left=(50+col*330)+"px";
+d.style.top=(50+row*230)+"px";
+d.style.width="300px";
+d.style.height="200px";
+
+if(m.type==="video"){
+d.innerHTML=`<video controls autoplay muted loop src="${m.url}"></video>`;
+}else{
+d.innerHTML=`<img src="${m.url}">`;
+}
+
+dragMediaSave(d,m.id);
+document.body.appendChild(d);
+});
+}
+
+async function cmd(c){
+await db.from("layout_controls").upsert({id:1,command:c,updated_at:new Date()});
+}
+
+db.channel("v15-final-sync")
+.on("postgres_changes",{event:"*",schema:"public",table:"system_settings"},loadSettings)
+.on("postgres_changes",{event:"*",schema:"public",table:"custom_layouts"},renderLayout)
+.on("postgres_changes",{event:"*",schema:"public",table:"media_playlist"},renderMedia)
+.on("postgres_changes",{event:"*",schema:"public",table:"account_store"},refreshAll)
+.on("postgres_changes",{event:"*",schema:"public",table:"admin_logs"},refreshAll)
+.on("postgres_changes",{event:"*",schema:"public",table:"login_logs"},refreshAll)
+.on("postgres_changes",{event:"*",schema:"public",table:"layout_controls"},p=>{
+document.querySelectorAll("video").forEach(v=>{
+if(p.new?.command==="PLAY_ALL")v.play();
+if(p.new?.command==="PAUSE_ALL")v.pause();
+if(p.new?.command==="DELETE_ALL")v.remove();
+});
+})
+.subscribe();
+
+</script>
+</body>
+</html>
