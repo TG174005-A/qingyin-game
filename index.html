@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>CMS Platform V6 Final</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+<style>
+body{font-family:Arial;margin:0;background:#f1f5f9}
+.card{background:#fff;margin:15px;padding:20px;border-radius:16px}
+button{padding:10px;background:#2563eb;color:white;border:0;border-radius:8px}
+input,textarea{width:100%;padding:10px;margin:5px}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<div id="loginBox" class="card">
+<h2>CMS Platform V6</h2>
+<input id="email" placeholder="邮箱">
+<input id="password" type="password" placeholder="密码">
+<button onclick="login()">登录</button>
+<button onclick="register()">注册</button>
+<p id="msg"></p>
+</div>
+
+<div id="app" class="hidden">
+<div class="card">
+<h1 id="siteTitle">CMS</h1>
+<span id="userInfo"></span>
+<button onclick="logout()">退出</button>
+<button onclick="openAdmin()">后台</button>
+</div>
+<div id="notice" class="card"></div>
+<div id="sections"></div>
+</div>
+
+<script>
+const SUPABASE_URL="https://pnqlhpwfkqonhyrtgrha.supabase.co";
+const SUPABASE_KEY="sb_publishable_u1KUB7-FCV7OBzToH8CBbA_qsYY9ZcQ";
+const db=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+let currentUser=null;
+
+async function register(){
+ const {error}=await db.auth.signUp({email:email.value,password:password.value});
+ msg.innerHTML=error?error.message:"注册成功";
+}
+
+async function login(){
+ const {data,error}=await db.auth.signInWithPassword({email:email.value,password:password.value});
+ if(error){msg.innerHTML=error.message;return}
+ currentUser=data.user;
+ loginBox.classList.add("hidden");
+ app.classList.remove("hidden");
+ userInfo.innerHTML=currentUser.email;
+ loadHome();
+}
+
+async function logout(){
+ await db.auth.signOut();
+ location.reload();
+}
+
+async function loadHome(){
+ const {data}=await db.from("settings").select("*").limit(1).single();
+ if(data){
+  siteTitle.innerHTML=data.site_title||"CMS";
+  notice.innerHTML=data.announcement||"";
+ }
+ const result=await db.from("sections").select("*,contents(*)").order("sort");
+ sections.innerHTML="";
+ (result.data||[]).forEach(s=>{
+  sections.innerHTML+="<div class='card'><h2>"+s.title+"</h2>"+(s.contents||[]).map(c=>"<p>"+c.title+"</p>").join("")+"</div>";
+ });
+}
+
+function openAdmin(){
+ alert("管理员后台");
+}
+
+if("serviceWorker" in navigator){
+ navigator.serviceWorker.register("sw.js");
+}
+</script>
+</body>
+</html>
