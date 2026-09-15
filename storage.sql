@@ -1,0 +1,5 @@
+-- Storage buckets:
+-- media
+-- covers
+-- avatars
+-- documents
