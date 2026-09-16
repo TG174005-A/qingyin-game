@@ -142,10 +142,10 @@ input,select{padding:8px;width:100%;margin:6px 0;border:1px solid #0ff4;border-r
   </div>
 </div>
 <script>
-// ====================已填入你提供的参数（移除/rest/v1/后缀）====================
+// ====================已填入你提供的参数====================
 const SUPABASE_URL = "https://mqvxghfcglyrfnqmjtwd.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_YnQaAZSQZ3qhWwIovqaqWQ_uJNRwUrb";
-// ====================================================================
+// 只创建一次supabase实例
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let currentUser = null;
