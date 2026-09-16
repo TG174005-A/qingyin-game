@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>多浏览器同步素材管理系统</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui, sans-serif}
+body{background:#f4f5f7;color:#222}
+#banner{background:#222;color:#fff;padding:8px;overflow:hidden;white-space:nowrap}
+#banner-text{display:inline-block;animation:marquee 12s linear infinite}
+@keyframes marquee{0%{transform:translateX(100%)}100%{transform:translateX(-100%)}}
+header{padding:12px 20px;display:flex;justify-content:space-between;align-items:center;background:#fff;border-bottom:1px solid #ddd}
+.container{display:flex;height:calc(100vh - 104px)}
+.sidebar{width:260px;background:#fff;border-right:1px solid #ddd;padding:16px}
+.main{flex:1;padding:20px;overflow:auto}
+.tab{padding:10px 14px;margin:4px 0;cursor:pointer;border-radius:6px}
+.tab.active{background:#2563eb;color:#fff}
+.panel{display:none}
+.panel.active{display:block}
+button{padding:8px 12px;border:none;border-radius:6px;background:#2563eb;color:#fff;cursor:pointer;margin:4px}
+button.danger{background:#dc2626}
+input,select{padding:8px;width:100%;margin:6px 0;border:1px solid #ccc;border-radius:6px}
+.zone-card{border:1px solid #ccc;padding:12px;border-radius:8px;margin:8px}
+#uploadBtn{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:12px 20px;font-size:16px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center}
+.modal.show{display:flex}
+.modal-content{background:#fff;padding:20px;border-radius:10px;width:90%;max-width:500px}
+</style>
+</head>
+<body>
+<div id="banner"><span id="banner-text">欢迎，跑马灯消息</span></div>
+<header>
+  <h2>素材同步平台</h2>
+  <div id="userInfo">未登录</div>
+</header>
+<div class="container">
+  <aside class="sidebar">
+    <div class="tab active" data-tab="login">登录/注册</div>
+    <div class="tab" data-tab="zones">自定义分区</div>
+    <div class="tab" data-tab="layout">布局管理</div>
+    <div class="tab" data-tab="media">素材列表</div>
+    <div class="tab" data-tab="banner">横幅跑马灯</div>
+    <div class="tab" data-tab="admin">管理员面板</div>
+  </aside>
+  <main class="main">
+    <!-- 登录面板 -->
+    <div class="panel active" id="panel-login">
+      <h3>登录</h3>
+      <input id="user" placeholder="用户名">
+      <input id="pwd" type="password" placeholder="密码">
+      <button onclick="login()">登录</button>
+      <button onclick="register()">注册</button>
+    </div>
+    <!-- 分区面板 -->
+    <div class="panel" id="panel-zones">
+      <h3>自定义分区</h3>
+      <input id="zoneName" placeholder="分区名称">
+      <input id="zoneW" placeholder="宽度" type="number">
+      <input id="zoneH" placeholder="高度" type="number">
+      <label><input type="checkbox" id="zoneUpload">允许用户上传</label>
+      <button onclick="addZone()">新增分区</button>
+      <div id="zoneList"></div>
+    </div>
+    <!-- 布局 -->
+    <div class="panel" id="panel-layout">
+      <h3>布局拖拽管理</h3>
+      <div id="layoutList"></div>
+    </div>
+    <!-- 素材 -->
+    <div class="panel" id="panel-media">
+      <h3>素材播放列表</h3>
+      <input id="mediaUrl" placeholder="媒体链接">
+      <select id="mediaType">
+        <option value="image">图片</option>
+        <option value="video">视频</option>
+        <option value="text">文字</option>
+      </select>
+      <button onclick="addMedia()">添加素材</button>
+      <div id="mediaList"></div>
+    </div>
+    <!-- 横幅 -->
+    <div class="panel" id="panel-banner">
+      <h3>顶部跑马灯横幅</h3>
+      <input id="bannerContent" placeholder="跑马灯文字">
+      <button onclick="saveBanner()">保存横幅</button>
+    </div>
+    <!-- 管理员面板 -->
+    <div class="panel" id="panel-admin">
+      <h3>管理员后台</h3>
+      <button class="danger" onclick="clearAllData()">清空全部数据</button>
+      <div id="userList"></div>
+    </div>
+  </main>
+</div>
+<button id="uploadBtn" onclick="openUploadModal">底部上传素材</button>
+<div class="modal" id="uploadModal">
+  <div class="modal-content">
+    <h3>上传素材</h3>
+    <input id="uploadMediaUrl" placeholder="粘贴媒体地址">
+    <button onclick="submitUpload()">确认上传</button>
+    <button onclick="closeUploadModal()">关闭</button>
+  </div>
+</div>
+
+<script>
+// ==================== 修改这里为你的Supabase信息 ====================
+const SUPABASE_URL = "YOUR_PROJECT_URL";
+const SUPABASE_ANON_KEY = "YOUR_ANON_KEY";
+// ===================================================================
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let currentUser = null;
+const tabs = document.querySelectorAll('.tab');
+tabs.forEach(t=>t.onclick=()=>switchTab(t.dataset.tab));
+
+function switchTab(tabId){
+  tabs.forEach(t=>t.classList.remove('active'));
+  document.querySelector(`.tab[data-tab="${tabId}"]`).classList.add('active');
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById(`panel-${tabId}`).classList.add('active');
+}
+
+// 登录
+async function login(){
+  const username = document.getElementById('user').value;
+  const password = document.getElementById('pwd').value;
+  const {data,error}=await supabase.from('app_users').select('*').eq('username',username).eq('password',password).single();
+  if(error) return alert('账号密码错误');
+  currentUser = data;
+  document.getElementById('userInfo').innerText=`${currentUser.username} (${currentUser.role})`;
+  alert('登录成功');
+  loadAll();
+}
+async function register(){
+  const username = document.getElementById('user').value;
+  const password = document.getElementById('pwd').value;
+  const {error}=await supabase.from('app_users').insert({username,password,role:'user'});
+  if(error) return alert('注册失败，用户名重复');
+  alert('注册成功');
+}
+
+// 分区
+async function addZone(){
+  const zone_name = document.getElementById('zoneName').value;
+  const width = Number(document.getElementById('zoneW').value);
+  const height = Number(document.getElementById('zoneH').value);
+  const allow_upload = document.getElementById('zoneUpload').checked;
+  await supabase.from('custom_zones').insert({zone_name,width,height,allow_upload});
+}
+async function loadZones(){
+  const {data}=await supabase.from('custom_zones').select('*');
+  const wrap = document.getElementById('zoneList');
+  wrap.innerHTML="";
+  data.forEach(z=>{
+    wrap.innerHTML += `<div class="zone-card">${z.zone_name} ${z.width}×${z.height} <button onclick="delZone('${z.id}')">删除</button></div>`
+  })
+}
+async function delZone(id){await supabase.from('custom_zones').delete().eq('id',id)}
+
+// 素材
+async function addMedia(){
+  const media_url = document.getElementById('mediaUrl').value;
+  const media_type = document.getElementById('mediaType').value;
+  await supabase.from('media_playlist').insert({media_url,media_type});
+}
+async function loadMedia(){
+  const {data}=await supabase.from('media_playlist').select('*');
+  const wrap=document.getElementById('mediaList');wrap.innerHTML="";
+  data.forEach(m=>wrap.innerHTML += `<div>${m.media_type}: ${m.media_url} <button onclick="delMedia('${m.id}')">删除</button></div>`)
+}
+async function delMedia(id){await supabase.from('media_playlist').delete().eq('id',id)}
+
+// 横幅
+async function saveBanner(){
+  const content = document.getElementById('bannerContent').value;
+  await supabase.from('banner_messages').upsert({content,enabled:true},{onConflict:'id'});
+}
+async function loadBanner(){
+  const {data}=await supabase.from('banner_messages').select('*').limit(1).single();
+  if(data){
+    document.getElementById('banner-text').innerText=data.content;
+    document.getElementById('bannerContent').value=data.content;
+  }
+}
+
+// 清空全部
+async function clearAllData(){
+  if(!confirm("确定清空全部业务数据？")) return;
+  await supabase.from('custom_zones').delete().neq('id','00000000-0000-0000-0000-000000000000');
+  await supabase.from('custom_layouts').delete().neq('id','00000000-0000-0000-0000-000000000000');
+  await supabase.from('media_playlist').delete().neq('id','00000000-0000-0000-0000-000000000000');
+  await supabase.from('banner_messages').delete().neq('id','00000000-0000-0000-0000-000000000000');
+}
+
+// 上传弹窗
+function openUploadModal(){document.getElementById('uploadModal').classList.add('show')}
+function closeUploadModal(){document.getElementById('uploadModal').classList.remove('show')}
+async function submitUpload(){
+  const url = document.getElementById('uploadMediaUrl').value;
+  await supabase.from('media_playlist').insert({media_url:url,media_type:'image'});
+  closeUploadModal();
+}
+
+// Realtime 实时监听（A/B/C浏览器同步）
+const channel = supabase.channel('global-sync')
+.on('postgres_changes',{event:'*',schema:'public',table:'custom_zones'},()=>loadAll())
+.on('postgres_changes',{event:'*',schema:'public',table:'custom_layouts'},()=>loadAll())
+.on('postgres_changes',{event:'*',schema:'public',table:'media_playlist'},()=>loadAll())
+.on('postgres_changes',{event:'*',schema:'public',table:'banner_messages'},()=>loadAll())
+.subscribe();
+
+async function loadAll(){
+  await loadZones();
+  await loadMedia();
+  await loadBanner();
+}
+loadAll();
+</script>
+</body>
+</html>
