@@ -17,7 +17,7 @@ header h2{color:#0ff;text-shadow:0 0 6px #0ff}
 #userInfo{color:#8cf}
 #adminBtn{padding:8px 12px;border:none;border-radius:6px;background:#0055aa;color:#fff;cursor:pointer;border:1px solid #0ff6;display:none}
 #logoutBtn{padding:8px 12px;border:none;border-radius:6px;background:#771122;color:#fff;cursor:pointer;border:1px solid #f446;display:none}
-.container{display:none;height:calc(100vh - 104px);display:flex;}
+.container{height:calc(100vh - 104px);display:flex;}
 .sidebar{width:260px;background:#0b0b1b;border-right:1px solid #0ff4;padding:16px}
 .main{flex:1;padding:20px;overflow:auto;background:#080810}
 .tab{padding:10px 14px;margin:4px 0;cursor:pointer;border-radius:6px;color:#bcf;border:1px solid transparent}
@@ -64,7 +64,7 @@ input,select{padding:8px;width:100%;margin:6px 0;border:1px solid #0ff4;border-r
     <div id="debugLog"></div>
   </div>
 </div>
-<div class="container">
+<div class="container" style="display:none;">
   <aside class="sidebar">
     <div class="tab active" data-tab="zones">自定义分区</div>
     <div class="tab" data-tab="layout">布局管理</div>
@@ -114,7 +114,7 @@ input,select{padding:8px;width:100%;margin:6px 0;border:1px solid #0ff4;border-r
     </div>
   </main>
 </div>
-<button id="uploadBtn" onclick="openUploadModal()">底部上传素材</button>
+<button id="uploadBtn" onclick="openUploadModal()" style="display:none;">底部上传素材</button>
 <!-- 素材上传弹窗 -->
 <div class="modal" id="uploadModal">
   <div class="modal-content">
