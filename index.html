@@ -1,0 +1,1406 @@
+<!-- 清音V17｜后台布局深度优化｜全部BUG修复整合完整版 -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>清音 V17</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.8"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+    margin:0;
+    padding-top:42px;
+    padding-bottom:140px;
+    min-height:100vh;
+    background:#020617;
+    color:#fff;
+    font-family:system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+    background-repeat:no-repeat;
+    background-size:cover;
+    background-position:center;
+    overflow-x:hidden;
+}
+/*全局滚动条美化 */
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-track{background:#111827;}
+::-webkit-scrollbar-thumb{background:#00ffff44;border-radius:3px;}
+
+button,input,select,textarea{
+    padding:10px 12px;
+    margin:4px 3px;
+    border-radius:10px;
+    background:#ffffff18;
+    color:#fff;
+    border:1px solid #00ffff;
+    font-size:15px;
+    touch-action:manipulation;
+}
+button{cursor:pointer;min-height:40px;transition:0.15s ease;}
+button:hover{background:#ffffff28;}
+button.danger{border-color:#ff4466;color:#ff8899;background:#ff22441a}
+button.danger:hover{background:#ff224433}
+button:disabled{opacity:0.4;cursor:not-allowed}
+.btn-small{padding:5px 9px;font-size:13px;min-height:28px;margin:2px;}
+
+.tag{
+    display:inline-block;
+    padding:2px 8px;
+    border-radius:6px;
+    font-size:12px;
+    margin:2px;
+    border:1px solid #00ffff77;
+    background:#00ffff15;
+}
+.media-wrap{position:relative;}
+.download-icon{
+    position:absolute;
+    top:6px;
+    right:6px;
+    z-index:12;
+}
+
+#audioPlayerBar{
+    position:fixed;
+    bottom:0px;left:0;width:100%;
+    background:#000000dd;
+    border-top:1px solid #00ffff44;
+    z-index:9999;
+    padding:8px 16px;
+    display:flex;
+    gap:10px;
+    align-items:center;
+}
+
+#adminBtn{display:none;position:fixed;right:16px;top:16px;z-index:99}
+#logoutBtn{display:none;position:fixed;right:16px;top:64px;z-index:99}
+
+#topLeftInfo{display:none !important;}
+#webTitle{display:none !important;}
+#userName{display:none !important;}
+
+#bannerWrap{
+    position:fixed;
+    left:0;
+    top:0;
+    width:100%;
+    height:40px;
+    z-index:9998;
+    overflow:hidden;
+    background:#000000cc;
+}
+#bannerTrack{height:100%;display:flex;align-items:center;}
+.banner-item{
+    display:inline-flex;
+    align-items:center;
+    padding:0 32px;
+    height:100%;
+    gap:8px;
+}
+.banner-item-text{font-size:clamp(13px,2vw,16px);}
+.banner-item-img{height:28px;width:auto;object-fit:contain;border-radius:4px;}
+.banner-item-video{height:32px;width:auto;border-radius:4px;}
+
+#bottomUploadBtn{
+    position:fixed;
+    bottom:70px;
+    left:50%;
+    transform:translateX(-50%);
+    z-index:998;
+    padding:12px 28px;
+    font-size:16px;
+}
+
+/* ============【后台面板布局优化核心】============ */
+#panel{
+    display:none;
+    position:fixed;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    width:min(1600px,95vw);
+    height:min(920px,90vh);
+    border-radius:20px;
+    border:1px solid #00ffff50;
+    background:#0f172acc;
+    box-shadow:0 0 40px #00ffff22;
+    z-index:999;
+    overflow:hidden;
+    flex-direction:row;
+}
+#panel-sidebar{
+    width:230px;
+    flex-shrink:0;
+    border-right:1px solid #00ffff28;
+    padding:20px 14px;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    overflow-y:auto;
+}
+#panel-sidebar h3{margin:4px 0 14px 0;text-align:center;color:#00ffff;font-size:16px;}
+.sidebar-item{
+    width:100%;
+    min-height:42px;
+    text-align:left;
+    padding:9px 12px;
+    margin:0;
+    border-radius:8px;
+    border:1px solid transparent;
+    background:#ffffff0c;
+}
+.sidebar-item:hover{
+    border-color:#00ffff40;
+    background:#ffffff1a;
+}
+#panel-content{
+    flex:1;
+    padding:22px 24px;
+    overflow-y:auto;
+    overflow-x:hidden;
+}
+.panel-close-wrap{
+    position:absolute;
+    right:14px;
+    top:10px;
+    z-index:10;
+}
+.card{
+    border:1px solid #00ffff28;
+    border-radius:16px;
+    padding:20px 22px;
+    margin-bottom:18px;
+    background:#ffffff08;
+}
+.card h3{
+    margin:0 0 14px 0;
+    color:#00ffff;
+    padding-bottom:10px;
+    border-bottom:1px solid #00ffff22;
+    font-size:17px;
+}
+.media-item{
+    border:1px solid #00ffff22;
+    border-radius:12px;
+    padding:14px;
+    margin:10px 0;
+    display:flex;
+    gap:12px;
+    align-items:center;
+    flex-wrap:wrap;
+}
+.media-item-thumb{width:80px;height:60px;object-fit:cover;border-radius:8px;background:#0003;}
+.media-item input{width:75px;}
+.zone-item{
+    border:1px solid #00ffff22;
+    border-radius:12px;
+    padding:14px;
+    margin:10px 0;
+    display:flex;
+    gap:10px;
+    align-items:center;
+    flex-wrap:wrap;
+}
+.zone-item input{width:75px;}
+.banner-admin-item{
+    border:1px solid #00ffff22;
+    border-radius:12px;
+    padding:14px;
+    margin:10px 0;
+    display:flex;
+    gap:10px;
+    align-items:center;
+    flex-wrap:wrap;
+}
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:8px 0;}
+#users table,#logs table{width:100%;border-collapse:collapse;min-width:620px;}
+#users td,#logs td,#users th,#logs th{border:1px solid #00ffff33;padding:11px 12px;}
+#users tr:nth-child(even),#logs tr:nth-child(even){background:#00ffff0a;}
+
+.zone-container{
+    position:absolute;
+    border:1px dashed #00ffff88;
+    background:#00ffff0f;
+    border-radius:16px;
+    overflow:hidden;
+}
+.area{
+    position:absolute;
+    border:1px solid #00ffff;
+    background:#ffffff18;
+    cursor:move;
+    resize:both;
+    overflow:hidden;
+}
+.area img,.area video,.area audio{object-fit:contain;width:100%;height:100%}
+
+#loginBox,#homeBox{
+    background-repeat:no-repeat;background-size:cover;background-color:#020617;background-position:center;
+}
+body{min-height:100vh;overflow-x:hidden;}
+#loginBox{
+    min-height:100vh;
+    display:flex;flex-direction:column;justify-content:center;align-items:center;
+    padding:40px 20px;gap:12px;
+}
+#loginBox h1{margin-bottom:30px;font-size:clamp(28px,5vw,52px);}
+#loginBox input{width:min(420px,90vw);height:46px;font-size:16px;}
+#loginBox button{width:min(420px,90vw);height:46px;}
+#homeBox{
+    min-height:100vh;padding:20px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+}
+.tip{
+    position:fixed;left:50%;top:24px;transform:translateX(-50%);
+    background:#00ffff33;border:1px solid #00ffff;
+    padding:10px 24px;border-radius:12px;z-index:9999;display:none;
+}
+#userUploadModal{
+    display:none;
+    position:fixed;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    width:min(540px,92vw);
+    max-height:85vh;
+    overflow-y:auto;
+    border-radius:18px;
+    border:1px solid #00ffff50;
+    background:#111d;
+    box-shadow:0 0 30px #00ffff1c;
+    z-index:10000;
+    padding:22px;
+}
+#modalMask{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.75);
+    z-index:9999;
+}
+
+/* =========平板&手机响应式｜后台布局重排========= */
+@media(max-width:940px){
+    #panel{
+        flex-direction:column;
+        width:96vw;
+        height:90vh;
+    }
+    #panel-sidebar{
+        width:100%;
+        border-right:none;
+        border-bottom:1px solid #00ffff30;
+        flex-direction:row;
+        flex-wrap:nowrap;
+        overflow-x:auto;
+        overflow-y:hidden;
+        padding:12px 10px;
+        gap:6px;
+    }
+    .sidebar-item{
+        flex-shrink:0;
+        min-width:120px;
+        white-space:nowrap;
+    }
+    #panel-content{
+        padding:16px 14px;
+    }
+    .media-item,.zone-item,.banner-admin-item{
+        flex-direction:column;
+        align-items:stretch;
+        gap:8px;
+    }
+}
+@media(max-width:768px){
+    body{padding-top:36px;padding-bottom:140px;}
+    #bannerWrap{height:36px;}
+    .banner-item-img{height:24px;}
+    .banner-item-video{height:28px;}
+    #panel{width:96vw;height:90vh;}
+    #panel-content{padding:14px 12px;}
+    .zone-container,.area{
+        position:relative!important;width:100%!important;left:auto!important;top:auto!important;margin:10px 0;
+    }
+    #bottomUploadBtn{bottom:80px;}
+    #audioPlayerBar{flex-wrap:wrap;font-size:13px;}
+    .card{padding:16px 14px;}
+}
+
+body,#loginBox,#homeBox,#panel{
+    background-repeat:no-repeat !important;
+    background-position:center center !important;
+    background-size:cover !important;
+    background-color:#020617 !important;
+}
+@media(max-width:768px){
+    body,#loginBox,#homeBox,#panel{
+        background-size:cover !important;
+    }
+}
+
+.layout-area-editor{display:flex;flex-wrap:wrap;gap:10px;}
+.layout-area-editor label{display:flex;align-items:center;gap:5px;}
+.layout-preview{position:relative;width:100%;min-height:400px;border:1px dashed #00ffff;overflow:hidden;}
+.layout-edit-area{position:fixed;border:2px dashed #00ffff;background:#00ffff15;cursor:move;z-index:999;}
+.layout-edit-area.active{border-color:#ff00ff;}
+#databaseViewer{max-height:70vh;overflow:auto;}
+.database-table{width:100%;overflow:auto;margin:10px 0;}
+.database-table table{border-collapse:collapse;width:100%;}
+.database-table td,.database-table th{
+    border:1px solid #00ffff33;
+    padding:9px 10px;
+    white-space:nowrap;
+}
+.online-count-card{
+    border:1px solid #00ffff33;
+    border-radius:16px;
+    padding:16px;
+    margin-bottom:16px;
+}
+
+#bottomProfileBtn{
+    position:fixed;
+    left:16px;
+    bottom:70px;
+    z-index:999;
+    padding:12px 20px;
+}
+#profileModal{
+    max-height:85vh;
+    overflow:auto;
+}
+@media(max-width:768px){
+    #bottomProfileBtn{left:10px;bottom:80px;max-width:45%;}
+}
+</style>
+<style id="responsive-background-fix">
+html,body{
+    width:100%;
+    min-height:100%;
+    overflow-x:hidden;
+}
+body{
+    background-size:cover !important;
+    background-position:center center !important;
+    background-attachment:fixed;
+}
+#loginBox,#homeBox,#panel{
+    background-size:cover !important;
+    background-position:center center !important;
+    background-repeat:no-repeat !important;
+}
+#loginBox,#homeBox{
+    min-height:100vh;
+    min-height:100dvh;
+}
+</style>
+<style id="background-preview-style">
+#bgPreviewPanel{display:flex;flex-wrap:wrap;gap:15px;}
+.bg-preview-item{border:1px solid #00ffff33;border-radius:12px;padding:10px;width:220px;background:#ffffff08;}
+.bg-preview-item img{width:100%;height:120px;object-fit:cover;border-radius:8px;margin-top:8px;background:#000;}
+</style>
+</head>
+<body>
+<div id="bannerWrap">
+    <div id="bannerTrack"></div>
+</div>
+
+<div class="tip" id="tipBox"></div>
+
+<div id="audioPlayerBar">
+    <span>🎵音频全局控制:</span>
+    <button class="btn-small" onclick="audioPlayAll()">全部播放音频</button>
+    <button class="btn-small" onclick="audioPauseAll()">全部暂停音频</button>
+</div>
+
+<button id="adminBtn" onclick="openAdmin()">后台管理</button>
+<button id="logoutBtn" onclick="logout()">退出登录</button>
+<div id="loginBox">
+<h1 id="loginPageText">清音</h1>
+<input id="account" placeholder="数字账号">
+<input id="password" type="password" placeholder="密码" onkeydown="if(event.key==='Enter')login()">
+<button onclick="login()">登录</button>
+<button onclick="register()">注册</button>
+</div>
+<div id="homeBox" style="display:none">
+        <div class="card" id="userProfileCard">
+            <h3>个人信息</h3>
+            <div id="userProfile"></div>
+        </div>
+</div>
+<button id="bottomProfileBtn" onclick="openProfile()">👤个人账户</button>
+<button id="bottomUploadBtn" onclick="openUserUploadModal()" style="display:none">📤 用户上传素材</button>
+<div id="modalMask" onclick="closeUserUploadModal()"></div>
+<div id="userUploadModal">
+    <h3>上传素材到指定分区（支持图片/视频/音频）</h3>
+    <input id="userMediaFile" type="file" accept="image/*,video/*,audio/*">
+    <label>目标分区：
+        <select id="userTargetZone"></select>
+    </label>
+    <label>素材宽:<input type="number" id="userContentW" value="220"></label>
+    <label>素材高:<input type="number" id="userContentH" value="160"></label>
+    <br>
+    <button id="btnUserUpload" onclick="userUploadMedia()">提交上传</button>
+    <button onclick="closeUserUploadModal()">关闭</button>
+</div>
+
+<div id="panel">
+    <div class="panel-close-wrap">
+        <button onclick="closeAdmin()">✕ 关闭</button>
+    </div>
+    <div id="panel-sidebar">
+        <h3>管理菜单</h3>
+        <button class="sidebar-item" onclick="switchTab('tab-user')">👥 用户管理</button>
+        <button class="sidebar-item" onclick="switchTab('tab-log')">📋 操作日志</button>
+        <button class="sidebar-item" onclick="switchTab('tab-bg')">🖼 背景设置</button>
+        <button class="sidebar-item" onclick="switchTab('tab-opacity')">🔳后台透明度</button>
+        <button class="sidebar-item" onclick="switchTab('tab-zone')">📦自定义分区</button>
+        <button class="sidebar-item" onclick="switchTab('tab-banner')">📢顶部横幅</button>
+        <button class="sidebar-item" onclick="switchTab('tab-layout-editor')">🎨可视化布局编辑</button>
+        <button class="sidebar-item" onclick="switchTab('tab-media')">🎬媒体素材</button>
+        <button class="sidebar-item" onclick="switchTab('tab-tags')">🏷素材标签管理</button>
+        <button class="sidebar-item" onclick="switchTab('tab-password')">🔑修改密码</button>
+        <button class="sidebar-item" onclick="switchTab('tab-webname')">🏷网页标题</button>
+        <button class="sidebar-item" onclick="switchTab('tab-database')">🗄数据库管理</button>
+        <button class="sidebar-item" onclick="switchTab('tab-logintext')">🔤登录页文字</button>
+        <button class="sidebar-item" onclick="switchTab('tab-system-setting')">⚙系统设置</button>
+    </div>
+    <div id="panel-content">
+<div id="onlineCountPanel" class="card">
+<h3>在线人数</h3>
+<div id="onlineCount">0 人在线</div>
+<div id="onlineUsersList"></div>
+</div>
+
+<div id="tab-user" class="tab-content">
+    <div class="card"><h3>用户权限管理</h3><div class="table-wrap"><div id="users"></div></div></div>
+</div>
+<div id="tab-log" class="tab-content" style="display:none">
+    <div class="card"><h3>管理员操作日志</h3><div class="table-wrap"><div id="logs"></div></div></div>
+</div>
+<div id="tab-opacity" class="tab-content" style="display:none">
+    <div class="card">
+        <h3>后台页面透明度</h3>
+        <input id="panelOpacityRange" type="range" min="0.1" max="1" step="0.05" value="1" onchange="changePanelOpacity(this.value)">
+        <span id="panelOpacityValue">100%</span>
+    </div>
+</div>
+<div id="tab-bg" class="tab-content" style="display:none">
+    <div class="card">
+        <h3>系统背景上传</h3>
+        <input id="bgFile" type="file">
+        <select id="bgType">
+            <option value="login_background">登录页面背景</option>
+            <option value="home_background">主页页面背景</option>
+            <option value="admin_background">后台面板背景</option>
+        </select>
+        <button id="btnUploadBg" onclick="uploadBg()">保存背景</button>
+        <hr style="margin:15px 0;border-color:#00ffff33">
+        <h3>当前使用背景预览</h3>
+        <div id="bgPreviewPanel">
+            <div class="bg-preview-item"><div>登录页背景</div><img id="previewLoginBg" src=""></div>
+            <div class="bg-preview-item"><div>网页主页背景</div><img id="previewHomeBg" src=""></div>
+            <div class="bg-preview-item"><div>后台页背景</div><img id="previewAdminBg" src=""></div>
+        </div>
+    </div>
+</div>
+<div id="tab-zone" class="tab-content" style="display:none">
+    <div class="card">
+        <h3>新建自定义分区（名称可留空）</h3>
+        <div>
+            <label>分区名称：<input id="zoneNewName" placeholder="可留空"></label>
+            <label>X:<input type="number" id="zoneNewX" value="60"></label>
+            <label>Y:<input type="number" id="zoneNewY" value="60"></label>
+            <label>宽:<input type="number" id="zoneNewW" value="420"></label>
+            <label>高:<input type="number" id="zoneNewH" value="320"></label>
+            <label><input type="checkbox" id="zoneAllowUserUpload">允许普通用户上传到此分区</label>
+            <button onclick="createNewZone()">创建分区</button>
+        </div>
+    </div>
+    <div class="card">
+        <h3>分区列表｜编辑 / 删除（删除清空分区内素材）</h3>
+        <div id="zoneListWrap"></div>
+    </div>
+</div>
+<div id="tab-banner" class="tab-content" style="display:none">
+    <div class="card">
+        <h3>新增顶部横幅消息（文字/图片/视频）</h3>
+        <div>
+            <label>消息类型：
+            <select id="bannerNewType">
+                <option value="text">文字+表情</option>
+                <option value="image">图片</option>
+                <option value="video">视频</option>
+            </select>
+            </label>
+            <label>内容文字：<input id="bannerNewText" placeholder="文字/表情；图片视频上传则不需要填写"></label>
+            <input id="bannerMediaFile" type="file" accept="image/*,video/*">
+            <label>排序数字:<input type="number" id="bannerNewSort" value="10"></label>
+            <label>滚动速度(秒):<input type="number" id="bannerNewSpeed" value="60"></label>
+            <label><input type="checkbox" id="bannerNewEnabled" checked>启用显示</label>
+            <br>
+            <button onclick="createBannerItem()">新增横幅条目</button>
+        </div>
+    </div>
+    <div class="card">
+        <h3>横幅列表｜编辑、启用、删除</h3>
+        <div id="bannerListWrap"></div>
+    </div>
+</div>
+<div id="tab-layout-editor" class="tab-content" style="display:none">
+    <div class="card">
+        <h3>🎨可视化布局编辑</h3>
+        <button onclick="enableWebLayoutEditor()">开启布局拖拽编辑</button>
+        <button onclick="disableWebLayoutEditor()">关闭布局拖拽编辑</button>
+        <p>开启后页面上所有分区与素材可直接鼠标拖拽移动位置，拖拽完成自动保存到数据库。移动端不支持拖拽。</p>
+        <div id="visualLayoutEditorArea"></div>
+    </div>
+</div>
+<div id="tab-media" class="tab-content" style="display:none">
+    <div class="card">
+        <h3>管理员上传媒体素材（图片/视频/音频）</h3>
+        <input id="mediaFile" type="file" accept="image/*,video/*,audio/*">
+        <div>
+            <label>选择目标分区：
+            <select id="mediaTargetZone">
+                <option value="">全局悬浮（不归属分区）</option>
+            </select>
+            </label>
+            <label>素材渲染宽:<input type="number" id="uploadContentW" value="220"></label>
+            <label>素材渲染高:<input type="number" id="uploadContentH" value="160"></label>
+            <label>素材标签逗号分隔:<input id="uploadMediaTags" placeholder="音乐,风景"></label>
+        </div>
+        <div>
+            <button id="btnUploadMedia" onclick="uploadMedia()">上传媒体</button>
+            <button onclick="cmd('PLAY_ALL')">播放全部视频</button>
+            <button onclick="cmd('PAUSE_ALL')">暂停全部视频</button>
+            <button class="danger" onclick="cmd('DELETE_ALL')">⚠ 删除全部媒体</button>
+        </div>
+        <div>
+            <label>按标签筛选素材:<input id="filterTagInput" placeholder="输入标签筛选"></label>
+            <button onclick="filterMediaByTag()">筛选</button>
+            <button onclick="clearMediaFilter()">清除筛选</button>
+        </div>
+    </div>
+    <div class="card">
+        <h3>素材列表（编辑位置尺寸 / 标签 /复制 /下载 /删除）</h3>
+        <div id="mediaListWrap"></div>
+    </div>
+</div>
+<div id="tab-tags" class="tab-content" style="display:none">
+    <div class="card">
+        <h3>🏷素材标签管理</h3>
+        <label>新建标签名称:<input id="newTagName"></label>
+        <label>标签颜色:<input id="newTagColor" value="#00ffff"></label>
+        <button onclick="createMediaTag()">新增标签</button>
+        <div id="tagListWrap"></div>
+    </div>
+</div>
+<div id="tab-logintext" class="tab-content" style="display:none">
+    <div class="card">
+        <h3>修改登录页显示文字</h3>
+        <input id="loginTextInput" placeholder="输入登录页标题">
+        <button onclick="saveLoginText()">保存登录文字</button>
+    </div>
+</div>
+<div id="tab-password" class="tab-content" style="display:none">
+    <div class="card">
+        <h3>修改登录密码</h3>
+        <input id="newPasswordInput" type="password" placeholder="输入新密码">
+        <button onclick="changeLoginPassword()">保存密码</button>
+    </div>
+</div>
+<div id="tab-webname" class="tab-content" style="display:none">
+    <div class="card">
+        <h3>修改网页标题（左上角显示）</h3>
+        <div>
+            <label>网页名称：<input id="webNameInput" placeholder="输入网页名字"></label>
+            <button onclick="saveWebTitle()">保存网页标题</button>
+        </div>
+    </div>
+</div>
+<div id="tab-database" class="tab-content" style="display:none">
+    <div class="card">
+        <h3>数据库全部内容管理</h3>
+        <button onclick="loadDatabaseContentManage()">刷新数据库内容</button>
+        <div id="databaseManageViewer"></div>
+    </div>
+</div>
+<div id="tab-system-setting" class="tab-content" style="display:none">
+    <div class="card">
+        <h3>⚙系统设置</h3>
+        <label><input type="checkbox" id="maintenanceMode">维护模式</label>
+        <br>
+        <label>站点公告：<textarea id="siteAnnouncement"></textarea></label>
+        <br>
+        <label>默认页面：<input id="defaultPage" placeholder="home"></label>
+        <br>
+        <label><input type="checkbox" id="siteEnabled">站点启用</label>
+        <br>
+        <button onclick="saveQingyinSystemSettings()">保存系统设置</button>
+    </div>
+</div>
+    </div>
+</div>
+
+<div id="profileModal" style="display:none;position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:10001;background:#111d;border:1px solid #00ffff;border-radius:18px;padding:20px;width:min(500px,90vw);max-height:85vh;overflow:auto;">
+<h3>个人信息</h3>
+<img id="userAvatar" src="" style="width:90px;height:90px;border-radius:50%;object-fit:cover">
+<input id="avatarFile" type="file" accept="image/*">
+<button onclick="uploadQingyinAvatar()">上传头像</button>
+<input id="profileNickname" placeholder="昵称">
+<input id="profilePhone" placeholder="手机号">
+<input id="profileEmail" placeholder="邮箱">
+<input id="profileGender" placeholder="性别">
+<textarea id="profileBio" placeholder="个人简介"></textarea>
+<button onclick="saveProfile()">保存</button>
+<button onclick="closeProfile()">关闭</button>
+</div>
+
+<div id="passwordModal" style="display:none;position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:10002;background:#111d;border:1px solid #00ffff;border-radius:18px;padding:20px;width:min(400px,90vw);max-height:85vh;overflow:auto;">
+<h3>修改账户密码</h3>
+<input id="newPasswordInput" type="password" placeholder="新密码">
+<button onclick="saveAccountPassword()">保存</button>
+<button onclick="closePasswordModal()">关闭</button>
+</div>
+
+<script>
+const db = supabase.createClient(
+"https://mqvxghfcglyrfnqmjtwd.supabase.co",
+"sb_publishable_YnQaAZSQZ3qhWwIovqaqWQ_uJNRwUrb"
+);
+const account = document.getElementById("account");
+const password = document.getElementById("password");
+const loginBox = document.getElementById("loginBox");
+const homeBox = document.getElementById("homeBox");
+const adminBtn = document.getElementById("adminBtn");
+const logoutBtn = document.getElementById("logoutBtn");
+const panel = document.getElementById("panel");
+const bottomUploadBtn = document.getElementById("bottomUploadBtn");
+let role="",currentUser="";
+let dragTarget=null;
+let realtimeChannel=null;
+let deleteAllLock=false;
+let refreshDebounceTimer=null;
+let zoneListCache=[];
+let bannerListCache=[];
+let tagListCache=[];
+let layoutEditorActive=false;
+let mediaFilterTag="";
+window.qingyinFilePolicy={
+ maxSize:50*1024*1024,
+ allow:["image/","video/","audio/"]
+};
+
+//====音频全局控制====
+function audioPlayAll(){
+    document.querySelectorAll(".area audio").forEach(a=>{a.play().catch(e=>showTip("浏览器阻止自动播放，请先交互页面"))})
+    showTip("全部音频开始播放")
+}
+function audioPauseAll(){
+    document.querySelectorAll(".area audio").forEach(a=>{a.pause()})
+    showTip("全部音频已暂停")
+}
+
+//====素材下载====
+function downloadMediaFile(url,filename){
+    const a=document.createElement("a");
+    a.href=url;
+    a.download=filename||"media";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+}
+
+//====标签管理====
+async function refreshTagList(){
+    const {data}=await db.from("media_tags").select("*");
+    tagListCache=data||[];
+    const wrap=document.getElementById("tagListWrap");
+    if(!wrap) return;
+    let html="";
+    tagListCache.forEach(t=>{
+        html+=`<div class="media-item">
+        <span style="color:${t.color}">${t.tag_name}</span>
+        <button class="btn-small danger" onclick="deleteMediaTag(${t.id},'${t.tag_name}')">删除标签</button>
+        </div>`
+    })
+    wrap.innerHTML=html;
+}
+async function createMediaTag(){
+    if(!(role==="admin"||role==="superadmin")){showTip("无权限");return}
+    const name=document.getElementById("newTagName").value.trim();
+    const color=document.getElementById("newTagColor").value.trim();
+    if(!name){showTip("标签名称不能为空");return}
+    await db.from("media_tags").insert({tag_name:name,color:color});
+    showTip("标签创建成功");
+    refreshTagList();
+}
+async function deleteMediaTag(id,tagName){
+    if(!confirm(`确认删除标签【${tagName}】？会清除所有素材该标签`)) return;
+    await db.from("media_tags").delete().eq("id",id);
+    const {data:layouts}=await db.from("custom_layouts").select("id,tags");
+    for(let item of layouts||[]){
+        let newTags=(item.tags||[]).filter(t=>t!==tagName);
+        await db.from("custom_layouts").update({tags:newTags}).eq("id",item.id);
+        await db.from("media_playlist").update({tags:newTags}).eq("id",item.id);
+    }
+    showTip("标签已删除，素材已清除该标签");
+    refreshTagList();
+    debounceRefreshAll();
+}
+function filterMediaByTag(){
+    mediaFilterTag=document.getElementById("filterTagInput").value.trim().toLowerCase();
+    debounceRefreshAll();
+    showTip("筛选标签："+mediaFilterTag)
+}
+function clearMediaFilter(){
+    mediaFilterTag="";
+    document.getElementById("filterTagInput").value="";
+    debounceRefreshAll();
+    showTip("清除标签筛选")
+}
+
+function openUserUploadModal(){
+    document.getElementById("modalMask").style.display="block";
+    document.getElementById("userUploadModal").style.display="block";
+}
+function closeUserUploadModal(){
+    document.getElementById("modalMask").style.display="none";
+    document.getElementById("userUploadModal").style.display="none";
+}
+function switchTab(tabId){
+    document.querySelectorAll(".tab-content").forEach(el=>el.style.display="none");
+    const target=document.getElementById(tabId);
+    target.style.display="block";
+    target.scrollTop=0;
+    if(tabId==="tab-tags") refreshTagList();
+}
+function showTip(msg){
+    const tipBox=document.getElementById("tipBox");
+    tipBox.innerText=msg;
+    tipBox.style.display="block";
+    setTimeout(()=>tipBox.style.display="none",2200);
+}
+function debounceRefreshAll(){
+    if(refreshDebounceTimer) clearTimeout(refreshDebounceTimer);
+    refreshDebounceTimer=setTimeout(()=>refreshAll(),800);
+}
+function renderUserProfile(){
+    const el=document.getElementById("userProfile");
+    if(el) el.innerHTML=`账号：${currentUser}<br>权限：${role}`;
+}
+function logout(){
+    role="";
+    currentUser="";
+    localStorage.removeItem("qingyin_session");
+    loginBox.style.display="flex";
+    homeBox.style.display="none";
+    adminBtn.style.display="none";
+    logoutBtn.style.display="none";
+    panel.style.display="none";
+    bottomUploadBtn.style.display="none";
+    closeUserUploadModal();
+    document.querySelectorAll(".area,.zone-container").forEach(e=>{
+        const vid=e.querySelector("video");
+        const aud=e.querySelector("audio");
+        if(vid){vid.pause();vid.src="";}
+        if(aud){aud.pause();aud.src="";}
+        e.remove();
+    });
+    dragTarget=null;
+    layoutEditorActive=false;
+    showTip("已退出登录");
+}
+async function restoreSession(){
+    const sess=localStorage.getItem("qingyin_session");
+    if(!sess) return;
+    try{
+        const obj=JSON.parse(sess);
+        let {data,error}=await db.rpc("login_numeric_account",{input_username:obj.user,input_password:obj.pwd});
+        if(error){
+            console.error("restoreSession rpc error:",error);
+            showTip("会话校验失败："+error.message);
+            logout();
+            return;
+        }
+        if(data?.success){
+            role=data.role??"user";
+            currentUser=data.username??"";
+            loginBox.style.display="none";
+            homeBox.style.display="block";
+            bottomUploadBtn.style.display="block";
+            renderUserProfile();
+            if(role==="superadmin"||role==="admin") adminBtn.style.display="block";
+            logoutBtn.style.display="block";
+            await refreshAll();
+            startOnlineStatus();
+        }else logout();
+    }catch(err){console.error(err);logout();}
+}
+async function login(){
+    const acc=account.value.trim();
+    const pwd=password.value;
+    if(!acc||!pwd){showTip("账号密码不能为空");return;}
+    try{
+        let {data,error}=await db.rpc("login_numeric_account",{input_username:acc,input_password:pwd});
+        if(error){
+            console.error("登录RPC错误",error);
+            showTip("数据库调用失败："+error.message);
+            return;
+        }
+        if(!data?.success){showTip("账号或密码错误");return;}
+        role=data.role??"user";
+        currentUser=data.username??"";
+        localStorage.setItem("qingyin_session",JSON.stringify({user:acc,pwd:pwd}));
+        loginBox.style.display="none";
+        homeBox.style.display="block";
+        bottomUploadBtn.style.display="block";
+        renderUserProfile();
+        logoutBtn.style.display="block";
+        if(role==="admin"||role==="superadmin") adminBtn.style.display="block";
+        refreshAll();
+        startOnlineStatus();
+        showTip("登录成功");
+    }catch(e){
+        console.error("登录异常",e);
+        showTip("网络异常："+(e.message||e));
+    }
+}
+async function register(){
+    const acc=account.value.trim();
+    const pwd=password.value;
+    if(!acc||!pwd){showTip("账号密码不能为空");return;}
+    try{
+        let {data,error}=await db.rpc("register_numeric_account",{input_username:acc,input_password:pwd});
+        if(error){
+            console.error("注册RPC错误",error);
+            showTip("注册失败："+error.message);
+            return;
+        }
+        showTip("注册成功，正在登录");
+        login();
+    }catch(e){
+        console.error("注册异常",e);
+        showTip("注册失败："+(e.message||e));
+    }
+}
+function openAdmin(){ panel.style.display="flex"; debounceRefreshAll(); switchTab("tab-user"); }
+function closeAdmin(){ panel.style.display="none"; }
+async function changeLoginPassword(){
+    const pwd=document.getElementById("newPasswordInput").value.trim();
+    if(!pwd){showTip("密码不能为空");return;}
+    try{
+        await db.from("account_store")
+        .update({password:pwd})
+        .eq("username",currentUser);
+        showTip("密码修改成功");
+    }catch(e){
+        showTip("修改失败："+e.message);
+    }
+}
+async function saveWebTitle(){
+    if(!(role==="admin"||role==="superadmin")){showTip("无权限");return;}
+    const titleVal = document.getElementById("webNameInput").value.trim();
+    if(!titleVal){showTip("网页标题不能为空");return;}
+    try{
+        await db.from("system_settings").update({web_title:titleVal}).eq("id",1);
+        showTip("网页标题已保存");
+        debounceRefreshAll();
+    }catch(e){showTip("保存失败："+e.message);}
+}
+async function saveLoginText(){
+    if(!(role==="admin"||role==="superadmin")){showTip("无权限");return;}
+    const val=document.getElementById("loginTextInput").value.trim();
+    if(!val){showTip("文字不能为空");return;}
+    try{
+        await db.from("system_settings").update({login_text:val}).eq("id",1);
+        showTip("登录页文字已保存");
+        await loadSettings();
+    }catch(e){showTip("保存失败："+e.message);}
+}
+
+async function renderBannerMarquee(){
+    const track=document.getElementById("bannerTrack");
+    const active=bannerListCache.filter(b=>b.enabled===true).sort((a,b)=>Number(a.sort)-Number(b.sort));
+    if(!active.length){
+        track.innerHTML="";
+        track.style.animation="none";
+        return;
+    }
+    let html="";
+    active.forEach(item=>{
+        html+=`<div class="banner-item">`;
+        if(item.msg_type==="text"){
+            html+=`<span class="banner-item-text" style="color:${item.text_color||'#00ffff'}">${(item.content||"")}</span>`;
+        }else if(item.msg_type==="image"){
+            html+=`<img class="banner-item-img" src="${item.content}" alt="">`;
+        }else if(item.msg_type==="video"){
+            html+=`<video class="banner-item-video" muted autoplay loop playsinline src="${item.content}"></video>`;
+        }
+        html+=`</div>`;
+    });
+    const speedList=active.map(i=>Number(i.speed||60));
+    const maxSpeed=Math.max(...speedList);
+    track.innerHTML=html+html;
+    const animStyle=`@keyframes marqueeScroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}`;
+    let s=document.getElementById("_marqueeAnim");
+    if(!s){
+        s=document.createElement("style");
+        s.id="_marqueeAnim";
+        document.head.appendChild(s);
+    }
+    s.textContent=animStyle;
+    track.style.animation=`marqueeScroll ${maxSpeed}s linear infinite`;
+}
+async function createBannerItem(){
+    if(!(role==="admin"||role==="superadmin")){showTip("无权限");return;}
+    const type=document.getElementById("bannerNewType").value;
+    const textVal=document.getElementById("bannerNewText").value;
+    const sort=Number(document.getElementById("bannerNewSort").value||10);
+    const speed=Number(document.getElementById("bannerNewSpeed").value||60);
+    const enabled=document.getElementById("bannerNewEnabled").checked;
+    const file=document.getElementById("bannerMediaFile").files[0];
+    let contentVal=textVal;
+    try{
+        if(file){
+            if(file.size > window.qingyinFilePolicy.maxSize){
+                showTip("文件超过50MB限制");
+                return;
+            }
+            const p="banner/"+Date.now()+"_"+file.name;
+            await db.storage.from("media").upload(p,file,{upsert:true});
+            contentVal=db.storage.from("media").getPublicUrl(p).data.publicUrl;
+        }
+        await db.from("banner_messages").insert({msg_type:type,content:contentVal,sort,speed,enabled});
+        showTip("横幅已新增");
+        debounceRefreshAll();
+    }catch(e){showTip("新增横幅失败："+e.message);}
+}
+async function renderBannerAdminList(){
+    const wrap=document.getElementById("bannerListWrap");
+    if(!bannerListCache.length){wrap.innerHTML="暂无横幅条目";return;}
+    let html="";
+    bannerListCache.forEach(b=>{
+        html+=`
+        <div class="banner-admin-item">
+            <span>ID:${b.id}</span>
+            <span>类型:${b.msg_type}</span>
+            <label>排序:<input type="number" id="bn_sort_${b.id}" value="${Number(b.sort)}"></label>
+            <label>速度:<input type="number" id="bn_speed_${b.id}" value="${Number(b.speed)}"></label>
+            <label><input type="checkbox" id="bn_en_${b.id}" ${b.enabled?"checked":""}>启用</label>
+            <button onclick="saveBanner(${b.id})">保存</button>
+            <button class="danger" onclick="deleteBanner(${b.id})">删除</button>
+        </div>`;
+    });
+    wrap.innerHTML=html;
+}
+async function saveBanner(id){
+    if(!(role==="admin"||role==="superadmin")) return;
+    const sort=Number(document.getElementById(`bn_sort_${id}`).value);
+    const speed=Number(document.getElementById(`bn_speed_${id}`).value);
+    const en=document.getElementById(`bn_en_${id}`).checked;
+    try{
+        await db.from("banner_messages").update({sort,speed,enabled:en}).eq("id",id);
+        showTip("横幅已更新");
+        debounceRefreshAll();
+    }catch(e){showTip("保存失败 "+e.message);}
+}
+async function deleteBanner(id){
+    if(!confirm("确认删除这条横幅？")) return;
+    if(!(role==="admin"||role==="superadmin")) return;
+    try{
+        await db.from("banner_messages").delete().eq("id",id);
+        await writeLog("DELETE_BANNER",String(id));
+        showTip("横幅已删除");
+        debounceRefreshAll();
+    }catch(e){showTip("删除失败 "+e.message);}
+}
+async function getNextZoneY(){
+    let y=0;
+    (zoneListCache||[]).forEach(z=>{
+        const bottom=Number(z.y||0)+Number(z.height||300)+20;
+        if(bottom>y)y=bottom;
+    });
+    return y;
+}
+async function saveZoneOrderLayout(list){
+ let y=0;
+ for(const z of list){
+  await db.from("custom_zones").update({y}).eq("id",z.id);
+  y+=Number(z.height||300)+20;
+ }
+}
+async function moveZoneOrder(id,direction){
+ if(!(role==="admin"||role==="superadmin")) return;
+ let list=[...(zoneListCache||[])].sort((a,b)=>Number(a.y||0)-Number(b.y||0));
+ let i=list.findIndex(z=>Number(z.id)===Number(id));
+ if(i<0)return;
+ let j=i+direction;
+ if(j<0||j>=list.length)return;
+ [list[i],list[j]]=[list[j],list[i]];
+ await saveZoneOrderLayout(list);
+ showTip("区域顺序已保存");
+ debounceRefreshAll();
+}
+async function createNewZone(){
+    if(!(role==="admin"||role==="superadmin")){showTip("无权限");return;}
+    const name=document.getElementById("zoneNewName").value.trim();
+    const w=Number(document.getElementById("zoneNewW").value||400);
+    const h=Number(document.getElementById("zoneNewH").value||300);
+    let x=0;
+    let y=await getNextZoneY();
+    const allowUpload=document.getElementById("zoneAllowUserUpload").checked;
+    try{
+        await db.from("custom_zones").insert({name,x,y,width:w,height:h,allow_user_upload:allowUpload});
+        await writeLog("CREATE_ZONE","");
+        showTip("分区已创建");
+        debounceRefreshAll();
+    }catch(e){showTip("创建分区失败："+e.message);}
+}
+async function userUploadMedia(){
+    const file=document.getElementById("userMediaFile").files[0];
+    const zoneId=document.getElementById("userTargetZone").value;
+    const cw=Number(document.getElementById("userContentW").value||220);
+    const ch=Number(document.getElementById("userContentH").value||160);
+    if(!file){showTip("请选择文件");return;}
+    if(file.size>window.qingyinFilePolicy.maxSize){
+        showTip("文件超过50MB");
+        return;
+    }
+    if(!zoneId){showTip("请选择允许上传的目标分区");return;}
+    let mediaType="image";
+    if(file.type.startsWith("video/")) mediaType="video";
+    if(file.type.startsWith("audio/")) mediaType="audio";
+    try{
+        const p="media/"+Date.now()+"_"+file.name;
+        await db.storage.from("media").upload(p,file,{upsert:true});
+        const url=db.storage.from("media").getPublicUrl(p).data.publicUrl;
+        await db.from("media_playlist").insert({
+            media_type:mediaType,url,zone_id:Number(zoneId),
+            content_width:cw,content_height:ch,
+            x:20,y:20,width:cw,height:ch,
+            uploader_username:currentUser,tags:[]
+        });
+        await db.from("custom_layouts").insert({
+            name:file.name,media_type:mediaType,content:url,zone_id:Number(zoneId),
+            content_width:cw,content_height:ch,
+            x:20,y:20,width:cw,height:ch,
+            uploader_username:currentUser,tags:[]
+        });
+        showTip("普通用户上传完成，内容将显示在指定分区");
+        closeUserUploadModal();
+        debounceRefreshAll();
+    }catch(e){showTip("上传失败："+e.message);}
+}
+async function uploadMedia(){
+    if(!(role==="admin"||role==="superadmin")) return;
+    const f=document.getElementById("mediaFile").files[0];
+    if(!f){showTip("请选择图片/视频/音频");return;}
+    if(f.size>window.qingyinFilePolicy.maxSize){
+        showTip("文件超过50MB");
+        return;
+    }
+    const zoneSel=document.getElementById("mediaTargetZone");
+    const zoneId=zoneSel.value?Number(zoneSel.value):null;
+    const cw=Number(document.getElementById("uploadContentW").value||220);
+    const ch=Number(document.getElementById("uploadContentH").value||160);
+    const tagInput=document.getElementById("uploadMediaTags").value.trim();
+    const tagsArr=tagInput?tagInput.split(",").map(s=>s.trim()).filter(s=>s):[];
+    const btn=document.getElementById("btnUploadMedia");
+    btn.disabled=true;
+    let mediaType="image";
+    if(f.type.startsWith("video/")) mediaType="video";
+    if(f.type.startsWith("audio/")) mediaType="audio";
+    try{
+        let p="media/"+Date.now()+"_"+f.name;
+        await db.storage.from("media").upload(p,f,{upsert:true});
+        let url=db.storage.from("media").getPublicUrl(p).data.publicUrl;
+        await db.from("media_playlist").insert({
+            media_type:mediaType,url,zone_id:zoneId,
+            content_width:cw,content_height:ch,
+            x:80,y:80,width:cw,height:ch,
+            uploader_username:currentUser,tags:tagsArr
+        });
+        await db.from("custom_layouts").insert({
+            name:f.name,media_type:mediaType,content:url,zone_id:zoneId,
+            content_width:cw,content_height:ch,
+            x:80,y:80,width:cw,height:ch,
+            uploader_username:currentUser,tags:tagsArr
+        });
+        showTip("管理员上传成功");
+        document.getElementById("uploadMediaTags").value="";
+        debounceRefreshAll();
+    }catch(e){showTip("上传异常："+e.message);}finally{btn.disabled=false;}
+}
+async function consumeLayoutControls(){
+    const {data}=await db.from("layout_controls").select("*").eq("id",1).single();
+    if(!data || !data.command) return;
+    const cmdName=data.command;
+    const videos=document.querySelectorAll(".area video");
+    if(cmdName==="PLAY_ALL"){
+        videos.forEach(v=>{v.play().catch(e=>{});});
+    }else if(cmdName==="PAUSE_ALL"){
+        videos.forEach(v=>v.pause());
+    }else if(cmdName==="DELETE_ALL"){
+        await db.from("media_playlist").delete().neq("id",0);
+        await db.from("custom_layouts").delete().neq("id",0);
+        showTip("全部媒体已删除");
+    }
+    await db.from("layout_controls").update({command:null}).eq("id",1);
+}
+async function refreshAll(){
+    try{
+        await consumeLayoutControls();
+        const {data:bData}=await db.from("banner_messages").select("*").order("sort");
+        bannerListCache=bData||[];
+        renderBannerMarquee();
+        await renderBannerAdminList();
+        let {data:zones}=await db.from("custom_zones").select("*");
+        zoneListCache=zones||[];
+        const adminSel=document.getElementById("mediaTargetZone");
+        adminSel.innerHTML=`<option value="">全局悬浮（不归属分区）</option>`;
+        zoneListCache.forEach(z=>{
+            adminSel.innerHTML+=`<option value="${z.id}">${z.name||"未命名分区"} id:${z.id}</option>`;
+        });
+        const userSel=document.getElementById("userTargetZone");
+        userSel.innerHTML="";
+        zoneListCache.filter(z=>z.allow_user_upload===true).forEach(z=>{
+            userSel.innerHTML+=`<option value="${z.id}">${z.name||"未命名分区"} id:${z.id}</option>`;
+        });
+        let {data:userList}=await db.rpc("get_all_accounts");
+        document.getElementById("users").innerHTML="<table>"+(userList||[]).map(u=>{
+            const safeRole=u.role??"user";
+            const isSa=safeRole==="superadmin";
+            return `<tr>
+                <td>${u.username??""}</td>
+                <td>${safeRole}</td>
+                <td>
+                    ${isSa?"<span style='color:#0ff'>SuperAdmin受保护</span>":`
+                    <button onclick="changeRole('${u.id}','admin')">设admin</button>
+                    <button onclick="changeRole('${u.id}','user')">设user</button>
+                    <button class="danger" onclick="removeUser('${u.id}')">删除</button>`}
+                </td>
+            </tr>`;
+        }).join("")+"</table>";
+        let lRes=await db.rpc("get_admin_logs");
+        const logList=lRes.data?.data||[];
+        document.getElementById("logs").innerHTML="<table><tr><th>操作人</th><th>动作</th><th>目标ID</th><th>时间</th></tr>"+
+            logList.map(x=>`<tr><td>${x.operator??""}</td><td>${x.action??""}</td><td>${x.target??""}</td><td>${x.created_at??""}</td></tr>`).join("")+"</table>";
+        await renderZoneList();
+        await loadSettings();
+        await renderZonesAndContents();
+        await renderMediaListPanel();
+        await qingyinLoadOnlineUsers();
+    }catch(err){
+        console.error(err);
+        showTip("刷新失败 "+err.message);
+    }
+}
+async function renderZoneList(){
+    const wrap=document.getElementById("zoneListWrap");
+    if(!zoneListCache.length){wrap.innerHTML="暂无分区";return;}
+    let html="";
+    zoneListCache.forEach(z=>{
+        html+=`
+        <div class="zone-item">
+            <span>ID:${z.id}</span>
+            <label>名称:<input value="${z.name??""}" id="z_name_${z.id}"></label>
+            <label>X:<input type="number" id="z_x_${z.id}" value="${Number(z.x)}"></label>
+            <label>Y:<input type="number" id="z_y_${z.id}" value="${Number(z.y)}"></label>
+            <label>W:<input type="number" id="z_w_${z.id}" value="${Number(z.width)}"></label>
+            <label>H:<input type="number" id="z_h_${z.id}" value="${Number(z.height)}"></label>
+            <label><input type="checkbox" id="z_allow_${z.id}" ${z.allow_user_upload?"checked":""}>允许普通用户上传</label>
+            <button onclick="saveZone(${z.id})">保存</button>
+            <button onclick="moveZoneOrder(${z.id},-1)">⬆上移</button>
+            <button onclick="moveZoneOrder(${z.id},1)">⬇下移</button>
+            <button class="danger" onclick="deleteZone(${z.id})">删除分区</button>
+        </div>`;
+    });
+    wrap.innerHTML=html;
+}
+async function saveZone(id){
+    if(!(role==="admin"||role==="superadmin")) return;
+    const name=document.getElementById(`z_name_${id}`).value;
+    const x=Number(document.getElementById(`z_x_${id}`).value);
+    const y=Number(document.getElementById(`z_y_${id}`).value);
+    const w=Number(document.getElementById(`z_w_${id}`).value);
+    const h=Number(document.getElementById(`z_h_${id}`).value);
+    const allow=document.getElementById(`z_allow_${id}`).checked;
+    try{
+        await db.from("custom_zones").update({name,x,y,width:w,height:h,allow_user_upload:allow}).eq("id",id);
+        await writeLog("UPDATE_ZONE",String(id));
+        showTip("分区已更新");
+        debounceRefreshAll();
+    }catch(e){showTip("保存分区失败 "+e.message);}
+}
+async function deleteZone(zoneId){
+    if(!confirm("删除分区会同时删除分区内全部素材！确认？")) return;
+    if(!(role==="admin"||role==="superadmin")) return;
+    try{
+        await db.from("media_playlist").delete().eq("zone_id",zoneId);
+        await db.from("custom_layouts").delete().eq("zone_id",zoneId);
+        await db.from("custom_zones").delete().eq("id",zoneId);
+        await writeLog("DELETE_ZONE",String(zoneId));
+        showTip("分区及内部素材已删除");
+        debounceRefreshAll();
+    }catch(e){showTip("删除分区失败 "+e.message);}
+}
+async function renderZonesAndContents(){
+    document.querySelectorAll(".zone-container,.area").forEach(el=>{
+        const v=el.querySelector("video");
+        const aud=el.querySelector("audio");
+        if(v){v.pause();v.src="";}
+        if(aud){aud.pause();aud.src="";}
+        el.remove();
+    });
+    zoneListCache.forEach(z=>{
+        const div=document.createElement("div");
+        div.className="zone-container";
+        div.dataset.zoneId=z.id;
+        div.style.left=Number(z.x)+"px";
+        div.style.top=Number(z.y)+"px";
+        div.style.width=Number(z.width)+"px";
+        div.style.height=Number(z.height)+"px";
+        document.body.appendChild(div);
+    });
+    const {data:layouts}=await db.from("custom_layouts").select("*");
+    (layouts||[]).forEach(a=>{
+        const d=document.createElement("div");
+        d.className="area media-wrap";
+        d.dataset.layoutId=a.id;
+        // 页面渲染素材增加下载按钮，权限：管理员 or 本人上传
+        const canDownload = (role==="admin"||role==="superadmin") || (a.uploader_username===currentUser);
+        if(canDownload){
+            const dlBtn=document.createElement("button");
+            dlBtn.className="btn-small download-icon";
+            dlBtn.innerText="⬇下载";
+            dlBtn.onclick=(ev)=>{ev.stopPropagation();downloadMediaFile(a.content,a.name||"file");};
+            d.appendChild(dlBtn);
+        }
+        if(a.zone_id){
+            const parent=document.querySelector(`.zone-container[data-zone-id="${a.zone_id}"]`);
+            if(!parent) return;
+            d.style.position="absolute";
+            d.style.left=Number(a.x??20)+"px";
+            d.style.top=Number(a.y??20)+"px";
+            d.style.width=Number(a.content_width??220)+"px";
+            d.style.height=Number(a.content_height??160)+"px";
+            parent.appendChild(d);
+        }else{
+            d.style.position="absolute";
+            d.style.left=Number(a.x??20)+"px";
+            d.style.top=Number(a.y??20)+"px";
+            d.style.width=Number(a.content_width??220)+"px";
+            d.style.height=Number(a.content_height??160)+"px";
+            document.body.appendChild(d);
+        }
+        // 渲染素材
+        if(a.media_type==="video"){
+            const v=document.createElement("video");
+            v.src=a.content;
+            v.muted=true;
+            v.loop=true;
+            v.playsInline=true;
+            v.style.pointerEvents="auto";
+            d.appendChild(v);
+        }else if(a.media_type==="audio"){
+            const aud=document.createElement("audio");
+            aud.controls=true;
+            aud.style.pointerEvents="auto";
+            aud.src=a.content;
+            d.appendChild(aud);
+            aud.addEventListener("mousedown",ev=>ev.stopPropagation());
+        }else{
+            const im=document.createElement("img");
+            im.src=a.content;
+            d.appendChild(im);
+        }
+        if(layoutEditorActive){
+            d.style.cursor="move";
+            d.addEventListener("mousedown",startDrag);
+        }
+    });
+}
+function startDrag(e){
+    if(!layoutEditorActive) return;
+    dragTarget=e.currentTarget;
+    dragTarget.style.zIndex=9999;
+    const rect=dragTarget.getBoundingClientRect();
+    dragTarget.dataset.dragOffX=e.clientX-rect.left;
+    dragTarget.dataset.dragOffY=e.clientY-rect.top;
+    e.preventDefault();
+}
+document.addEventListener("mousemove",e=>{
+    if(!dragTarget) return;
+    const offX=Number(dragTarget.dataset.dragOffX||0);
+    const offY=Number(dragTarget.dataset.dragOffY||0);
+    dragTarget.style.left=(e.clientX-offX)+"px";
+    dragTarget.style.top=(e.clientY-offY)+"px";
+});
+document.addEventListener("mouseup",async ()=>{
+    if(!dragTarget) return;
+    const id=dragTarget.dataset.layoutId;
+    if(id){
+        const left=parseInt(dragTarget.style.left||0);
+        const top=parseInt(dragTarget.style.top||0);
+        await db.from("custom_layouts").update({x:left,y:top}).eq("id",id);
+        showTip("布局位置已保存");
+    }
+    dragTarget=null;
+});
+function enableWebLayoutEditor(){
+    layoutEditorActive=true;
+    showTip("布局编辑已开启");
+    renderZonesAndContents();
+}
+function disableWebLayoutEditor(){
+    layoutEditorActive=false;
+    showTip("布局编辑已关闭");
+    renderZonesAndContents();
+}
+async function renderMediaListPanel(){
+    const wrap=document.getElementById("mediaListWrap");
+    if(!wrap) return;
+    const {data:list}=await db.from("custom_layouts").select("*");
+    if(!list||!list.length){wrap.innerHTML="暂无素材";return;}
+    let filterList=list;
+    if(mediaFilterTag){
+        filterList=list.filter(item=>{
+            const tags=(item.tags||[]).map(t=>t.toLowerCase());
+            return tags.includes(mediaFilterTag);
+        })
+    }
+    let html="";
+    filterList.forEach(a=>{
+        const canEdit=(role==="admin"||role==="superadmin")||(a.uploader_username===currentUser);
+        const canDownload = (role==="admin"||role==="superadmin") || (a.uploader_username===currentUser);
+        let tagHtml=(a.tags||[]).map(t=>`<span class="tag">${t}</span>`).join(" ");
+        html+=`
+        <div class="media-item">
+            <img class="media-item-thumb" src="${a.content}">
+            <span>ID:${a.id}</span>
+            <span>类型:${a.media_type||"image"}</span>
+            ${tagHtml}
+            <label>X:<input type="number" id="mx_${a.id}" value="${Number(a.x)}"></label>
+            <label>Y:<input type="number" id="my_${a.id}" value="${Number(a.y)}"></label>
+            <label>宽:<input type="number" id="mw_${a.id}" value="${Number(a.content_width)}"></label>
+            <label>高:<input type="number" id="mh_${a.id}" value="${Number(a.content_height)}"></label>
+            <label>标签(逗号分隔):<input id="mtags_${a.id}" value="${(a.tags||[]).join
+<!-- Qingyin V18 security compatibility patch -->
+<script>
+(function(){
+window.qingyinV18={version:'18.0'};
+window.escapeHTML=function(v){
+ return String(v??'').replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});
+};
+window.validateUploadFile=function(f){
+ if(!f)return false;
+ if(f.size>50*1024*1024)return false;
+ return ['image/','video/','audio/'].some(t=>f.type.startsWith(t));
+};
+window.safeSessionSave=function(user,token,expire){
+ localStorage.setItem('qingyin_session',JSON.stringify({user,token,expire}));
+};
+})();
+</script>
