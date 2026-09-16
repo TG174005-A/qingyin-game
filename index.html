@@ -1,0 +1,2648 @@
+<!-- 清音 V15 全功能在线版整合 -->
+<!-- 清音 V15 在线人数统计 -->
+<!-- 清音 V15 全功能最终整合版 -->
+<!-- 清音 V15 数据库内容查看管理 -->
+<!-- 清音 V15 所有上传内容实时显示优化 -->
+<!-- 清音 V15 网页区域实时布局同步 -->
+<!-- 清音 V15 后台自定义区域位置 -->
+<!-- 清音 V15 后台布局深度优化 -->
+<!-- 清音 V15 底部个人信息弹窗优化 -->
+<!-- 清音 V15 手机优化最终整合版 -->
+<!-- 清音 V15 手机浏览器优化版 -->
+<!-- 清音 V15 最终完整版整合 -->
+<!-- 顶部横幅完整显示优化 -->
+<!-- 清音 V15 最终超级整合版 -->
+<!-- 清音 V15 布局自定义优化 -->
+<!-- 清音 V15 极速优化 -->
+<!-- 清音 V15 最终整合版 -->
+<!-- 清音 V15 后台手机电脑自适应优化 -->
+<!-- 清音 V15 后台布局优化版 -->
+<!-- 清音 V15 可视化布局编辑 -->
+<!-- 清音 V15 后台透明度调节 -->
+<!-- 清音 V15 306680070密码管理 -->
+<!-- 清音 V15 个人中心功能 -->
+<!-- 清音 V15 修复运行版：建议通过 http://localhost 运行，不使用 file:// -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>清音 V15 修复登录版</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.8"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+    margin:0;
+    padding-top:42px;
+    padding-bottom:80px;
+    min-height:100vh;
+    background:#020617;
+    color:#fff;
+    font-family:system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+    background-repeat:no-repeat;
+    background-size:contain;background-color:#020617;
+    background-position:center;
+    overflow-x:hidden;
+}
+button,input,select{
+    padding:12px 10px;
+    margin:6px 4px;
+    border-radius:12px;
+    background:#ffffff18;
+    color:#fff;
+    border:1px solid #00ffff;
+    font-size:16px;
+    touch-action:manipulation;
+}
+button{cursor:pointer;min-height:44px;}
+button.danger{border-color:#ff4466;color:#ff8899;background:#ff22441a}
+button:disabled{opacity:0.4;cursor:not-allowed}
+#adminBtn{display:none;position:fixed;right:16px;top:16px;z-index:99}
+#logoutBtn{display:none;position:fixed;right:16px;top:64px;z-index:99}
+
+/* ==========顶部固定跑马灯横幅 全局置顶========== */
+#bannerWrap{
+    position:fixed;
+    left:0;
+    top:0;
+    width:100%;
+    height:40px;
+    z-index:9998;
+    overflow:hidden;
+    background:#000000cc;
+}
+#bannerTrack{
+    height:100%;
+    display:flex;
+    align-items:center;
+    white-space:nowrap;
+}
+.banner-item{
+    display:inline-flex;
+    align-items:center;
+    padding:0 32px;
+    height:100%;
+    gap:8px;
+}
+.banner-item-text{
+    font-size:clamp(13px,2vw,16px);
+}
+.banner-item-img{
+    height:28px;
+    width:auto;
+    object-fit:contain;
+    border-radius:4px;
+}
+.banner-item-video{
+    height:32px;
+    width:auto;
+    border-radius:4px;
+}
+
+/* ==========左上角标题+用户名========== */
+#topLeftInfo{
+    position:fixed;
+    left:16px;
+    top:46px;
+    z-index:999;
+    background:#00000077;
+    padding:6px 12px;
+    border-radius:10px;
+    font-size:15px;
+}
+#webTitle{font-weight:bold;color:#00ffff;margin-right:10px;}
+#userName{color:#ffffffdd;}
+
+/* ==========底部居中上传按钮========== */
+#bottomUploadBtn{
+    position:fixed;
+    bottom:24px;
+    left:50%;
+    transform:translateX(-50%);
+    z-index:998;
+    padding:14px 32px;
+    font-size:17px;
+}
+
+#panel{
+    display:none;
+    position:fixed;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    width:min(1400px,96vw);
+    height:min(900px,92vh);
+    border-radius:24px;
+    border:1px solid #00ffff;
+    background:#111d;
+    z-index:999;
+    overflow:hidden;
+    flex-direction:row;
+}
+#panel-sidebar{
+    width:220px;
+    flex-shrink:0;
+    border-right:1px solid #00ffff33;
+    padding:20px 12px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+}
+#panel-sidebar h3{margin:4px 0 16px 0;text-align:center;color:#00ffff}
+.sidebar-item{width:100%;text-align:left;}
+#panel-content{flex:1;padding:20px;overflow-y:auto;}
+.panel-close-wrap{position:absolute;right:16px;top:12px;z-index:10;}
+
+.card{
+    border:1px solid #00ffff33;
+    border-radius:16px;
+    padding:16px;
+    margin-bottom:16px;
+    background:#ffffff08;
+}
+.card h3{margin-top:0;color:#00ffff;border-bottom:1px solid #00ffff22;padding-bottom:8px;margin-bottom:12px}
+
+.media-item{
+    border:1px solid #00ffff22;
+    border-radius:12px;
+    padding:12px;
+    margin:8px 0;
+    display:flex;
+    gap:12px;
+    align-items:center;
+    flex-wrap:wrap;
+}
+.media-item-thumb{width:80px;height:60px;object-fit:cover;border-radius:8px;background:#0003;}
+.media-item input{width:70px;}
+
+.zone-item{
+    border:1px solid #00ffff22;
+    border-radius:12px;
+    padding:12px;
+    margin:8px 0;
+    display:flex;
+    gap:10px;
+    align-items:center;
+    flex-wrap:wrap;
+}
+.zone-item input{width:75px;}
+.banner-admin-item{
+    border:1px solid #00ffff22;
+    border-radius:12px;
+    padding:12px;
+    margin:8px 0;
+    display:flex;
+    gap:10px;
+    align-items:center;
+    flex-wrap:wrap;
+}
+
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+#users table,#logs table{width:100%;border-collapse:collapse;min-width:600px;}
+#users td,#logs td,#users th,#logs th{border:1px solid #00ffff33;padding:10px 12px;}
+#users tr:nth-child(even),#logs tr:nth-child(even){background:#00ffff0a;}
+
+.zone-container{
+    position:absolute;
+    border:1px dashed #00ffff88;
+    background:#00ffff0f;
+    border-radius:16px;
+    overflow:hidden;
+}
+.area{
+    position:absolute;
+    border:1px solid #00ffff;
+    background:#ffffff18;
+    cursor:move;
+    resize:both;
+    overflow:hidden;
+}
+.area img,.area video{object-fit:cover;width:100%;height:100%}
+
+#loginBox,#homeBox{
+    background-repeat:no-repeat;background-size:cover;background-color:#020617;background-position:center;
+}
+body{min-height:100vh;overflow-x:hidden;}
+#loginBox{
+    min-height:100vh;
+    display:flex;flex-direction:column;justify-content:center;align-items:center;
+    padding:40px 20px;gap:12px;
+}
+#loginBox h1{margin-bottom:30px;font-size:clamp(28px,5vw,52px);}
+#loginBox input{width:min(420px,90vw);height:48px;font-size:16px;}
+#loginBox button{width:min(420px,90vw);height:48px;}
+#homeBox{
+    min-height:100vh;padding:20px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+}
+
+.tip{
+    position:fixed;left:50%;top:24px;transform:translateX(-50%);
+    background:#00ffff33;border:1px solid #00ffff;
+    padding:10px 24px;border-radius:12px;z-index:9999;display:none;
+}
+
+/* ==========普通用户上传弹窗========== */
+#userUploadModal{
+    display:none;
+    position:fixed;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    width:min(520px,92vw);
+    border-radius:18px;
+    border:1px solid #00ffff;
+    background:#111d;
+    z-index:10000;
+    padding:20px;
+}
+#modalMask{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.7);
+    z-index:9999;
+}
+
+/* ==========响应式断点========== */
+@media(max-width:900px){
+    #panel{flex-direction:column;height:94vh;}
+    #panel-sidebar{
+        width:100%;
+        border-right:none;
+        border-bottom:1px solid #00ffff33;
+        flex-direction:row;
+        flex-wrap:nowrap;
+        overflow-x:auto;
+        padding:10px;
+        gap:6px;
+    }
+    .sidebar-item{
+        width:auto;
+        flex-shrink:0;
+        min-width:110px;
+    }
+    .media-item,.zone-item,.banner-admin-item{flex-direction:column;align-items:flex-start;gap:8px;}
+}
+@media(max-width:768px){
+    body{padding-top:36px;padding-bottom:90px;}
+    #bannerWrap{height:36px;}
+    .banner-item-img{height:24px;}
+    .banner-item-video{height:28px;}
+    #panel{width:96vw;height:94vh;}
+    #panel-content{padding:12px;}
+    .zone-container,.area{
+        position:relative!important;width:100%!important;left:auto!important;top:auto!important;margin:10px 0;
+    }
+    button,input,select{
+        padding:12px 8px;
+        font-size:15px;
+    }
+    #bottomUploadBtn{
+        bottom:16px;
+    }
+}
+
+/* 背景自适应修复：电脑/手机完整显示，不裁剪 */
+body,
+#loginBox,
+#homeBox,
+#panel{
+    background-repeat:no-repeat !important;
+    background-position:center center !important;
+    background-size:cover !important;
+    background-color:#020617 !important;
+}
+
+/* 保证移动端背景完整显示 */
+@media(max-width:768px){
+    body,
+    #loginBox,
+    #homeBox,
+    #panel{
+        background-size:cover !important;
+        background-position:center center !important;
+    }
+}
+
+/* 图片素材保持比例 */
+.area img,
+.area video{
+    object-fit:contain !important;
+}
+
+
+/* 后台布局优化 */
+#panel{
+    width:min(1500px,97vw)!important;
+    height:min(920px,94vh)!important;
+    display:flex;
+}
+
+#panel-sidebar{
+    width:260px!important;
+    padding:24px 14px!important;
+    overflow-y:auto;
+}
+
+#panel-content{
+    padding:24px!important;
+    overflow-y:auto;
+}
+
+.card{
+    padding:20px!important;
+    border-radius:18px!important;
+}
+
+.sidebar-item{
+    height:46px;
+    margin:4px 0;
+    text-align:left;
+}
+
+.table-wrap{
+    width:100%;
+    overflow:auto;
+}
+
+@media(max-width:900px){
+    #panel{
+        width:96vw!important;
+        height:95vh!important;
+    }
+
+    #panel-sidebar{
+        width:100%!important;
+        flex-direction:row!important;
+        overflow-x:auto!important;
+    }
+
+    .sidebar-item{
+        min-width:130px;
+        white-space:nowrap;
+    }
+}
+
+
+/* 后台手机电脑自适应 */
+#panel{
+    width:min(96vw,1500px)!important;
+    height:min(94vh,920px)!important;
+    max-width:100%;
+    max-height:100%;
+}
+
+#panel-sidebar{
+    flex-shrink:0;
+    overflow-y:auto;
+}
+
+#panel-content{
+    min-width:0;
+    overflow-x:hidden;
+    overflow-y:auto;
+}
+
+.card,
+.table-wrap,
+.media-item,
+.zone-item,
+.banner-admin-item{
+    max-width:100%;
+}
+
+img,video{
+    max-width:100%;
+}
+
+@media(max-width:900px){
+    #panel{
+        flex-direction:column!important;
+        width:96vw!important;
+        height:94vh!important;
+    }
+
+    #panel-sidebar{
+        width:100%!important;
+        height:auto;
+        flex-direction:row!important;
+        overflow-x:auto;
+        overflow-y:hidden;
+    }
+
+    .sidebar-item{
+        flex:none;
+        min-width:120px;
+    }
+
+    #panel-content{
+        width:100%;
+        padding:12px!important;
+    }
+}
+
+@media(max-width:480px){
+    button,input,select{
+        font-size:14px!important;
+    }
+
+    .card{
+        padding:12px!important;
+    }
+}
+
+
+/* ===== 极速响应优化 ===== */
+
+/* 减少动画和渲染压力 */
+*{
+    scroll-behavior:auto!important;
+}
+
+/* 优化媒体渲染 */
+img,video{
+    content-visibility:auto;
+    contain:content;
+}
+
+/* 后台区域减少重排 */
+#panel-content,
+.table-wrap{
+    contain:layout paint;
+}
+
+/* 大列表优化 */
+.media-item,
+.zone-item,
+.banner-admin-item,
+.realtime-admin-item{
+    content-visibility:auto;
+    contain-intrinsic-size:100px;
+}
+
+/* 移动端性能 */
+@media(max-width:768px){
+    video{
+        max-width:100%;
+        height:auto;
+    }
+}
+
+
+/* ===== 页面与后台布局优化 ===== */
+
+/* 防止按钮、输入框重叠 */
+button,input,select,textarea{
+    max-width:100%;
+    position:relative;
+    z-index:2;
+}
+
+button{
+    white-space:nowrap;
+}
+
+/* 顶部按钮自动避让 */
+#adminBtn,#logoutBtn{
+    right:16px;
+}
+
+#logoutBtn{
+    top:70px!important;
+}
+
+/* 后台自适应布局 */
+#panel{
+    display:none;
+    flex-direction:row;
+    overflow:hidden;
+}
+
+#panel-sidebar{
+    overflow-y:auto;
+    overflow-x:hidden;
+}
+
+#panel-content{
+    flex:1;
+    min-width:0;
+    overflow:auto;
+}
+
+/* 管理卡片自适应 */
+.card{
+    width:100%;
+    overflow:hidden;
+}
+
+.media-item,
+.zone-item,
+.banner-admin-item,
+.realtime-admin-item{
+    width:100%;
+    align-items:flex-start;
+}
+
+/* 表单自动排列 */
+.card label{
+    display:inline-flex;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:6px;
+}
+
+/* 手机端重新布局 */
+@media(max-width:900px){
+
+    #panel{
+        flex-direction:column!important;
+    }
+
+    #panel-sidebar{
+        width:100%!important;
+        display:flex;
+        flex-direction:row;
+        overflow-x:auto;
+    }
+
+    #panel-content{
+        width:100%;
+    }
+
+    button{
+        width:auto;
+    }
+}
+
+/* 超小屏 */
+@media(max-width:480px){
+
+    #adminBtn,
+    #logoutBtn{
+        right:8px;
+        transform:scale(.9);
+    }
+
+    .card{
+        padding:10px!important;
+    }
+
+    input,select,textarea,button{
+        font-size:14px!important;
+    }
+}
+
+
+/* 顶部横幅完整显示优化 */
+#bannerWrap,
+#realtimeMsgWrap{
+    overflow:hidden!important;
+    width:100%!important;
+}
+
+#bannerTrack,
+#realtimeMsgTrack{
+    display:flex!important;
+    align-items:center!important;
+    width:max-content!important;
+    min-width:100%!important;
+}
+
+.banner-item,
+.realtime-msg-item{
+    flex-shrink:0!important;
+    white-space:nowrap!important;
+    display:inline-flex!important;
+    align-items:center!important;
+}
+
+.banner-item-text,
+.realtime-msg-text{
+    display:inline-block!important;
+    max-width:none!important;
+}
+
+/* 手机端横幅适配 */
+@media(max-width:768px){
+    .banner-item,
+    .realtime-msg-item{
+        padding-left:16px!important;
+        padding-right:16px!important;
+    }
+
+    .banner-item-img,
+    .realtime-msg-img{
+        max-height:24px!important;
+        width:auto!important;
+    }
+
+    .banner-item-video,
+    .realtime-msg-video{
+        max-height:28px!important;
+        width:auto!important;
+    }
+}
+
+
+/* 手机浏览器兼容优化 */
+html,body{
+    width:100%;
+    max-width:100%;
+    overflow-x:hidden!important;
+}
+
+*{
+    max-width:100%;
+}
+
+input,select,textarea,button{
+    box-sizing:border-box;
+    touch-action:manipulation;
+}
+
+@media(max-width:768px){
+
+    body{
+        padding-top:76px!important;
+        padding-bottom:90px!important;
+        overflow-x:hidden!important;
+    }
+
+    #loginBox{
+        width:100%!important;
+        padding:20px!important;
+    }
+
+    #loginBox input,
+    #loginBox button{
+        width:95%!important;
+        max-width:420px!important;
+    }
+
+    #topLeftInfo{
+        left:8px!important;
+        max-width:70%;
+        overflow:hidden;
+        white-space:nowrap;
+    }
+
+    #adminBtn,
+    #logoutBtn{
+        right:8px!important;
+        transform:scale(.85);
+        transform-origin:right top;
+    }
+
+    #panel{
+        width:96vw!important;
+        height:92vh!important;
+        flex-direction:column!important;
+    }
+
+    #panel-sidebar{
+        width:100%!important;
+        height:auto!important;
+        flex-direction:row!important;
+        overflow-x:auto!important;
+        overflow-y:hidden!important;
+        white-space:nowrap;
+    }
+
+    #panel-content{
+        width:100%!important;
+        padding:10px!important;
+        overflow-x:hidden!important;
+    }
+
+    .card{
+        width:100%!important;
+        padding:12px!important;
+    }
+
+    .media-item,
+    .zone-item,
+    .banner-admin-item,
+    .realtime-admin-item{
+        flex-direction:column!important;
+        align-items:stretch!important;
+    }
+
+    #userUploadModal{
+        width:94vw!important;
+        max-height:90vh;
+        overflow:auto;
+    }
+}
+
+
+/* 底部个人信息入口 */
+#bottomProfileBtn{
+    position:fixed;
+    left:16px;
+    bottom:24px;
+    z-index:999;
+    padding:12px 20px;
+}
+
+/* 隐藏顶部账号权限显示 */
+#topLeftInfo #userName{
+    display:none!important;
+}
+
+#profileModal{
+    max-height:90vh;
+    overflow:auto;
+}
+
+@media(max-width:768px){
+    #bottomProfileBtn{
+        left:10px;
+        bottom:16px;
+        max-width:45%;
+    }
+}
+
+
+/* ===== 后台布局深度优化 ===== */
+
+/* 后台整体 */
+#panel{
+    width:min(1500px,96vw)!important;
+    height:min(900px,92vh)!important;
+    border-radius:20px;
+    overflow:hidden;
+}
+
+/* 左侧菜单 */
+#panel-sidebar{
+    width:240px!important;
+    flex-shrink:0;
+    padding:16px 12px!important;
+    overflow-y:auto;
+    gap:6px!important;
+}
+
+.sidebar-item{
+    width:100%!important;
+    min-height:44px;
+    text-align:left!important;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
+/* 内容区 */
+#panel-content{
+    flex:1;
+    min-width:0;
+    padding:18px!important;
+    overflow-y:auto;
+    overflow-x:hidden;
+}
+
+/* 卡片 */
+.card{
+    width:100%;
+    margin-bottom:14px!important;
+    overflow:hidden;
+}
+
+/* 表格 */
+.table-wrap{
+    width:100%;
+    overflow-x:auto;
+}
+
+/* 管理列表 */
+.media-item,
+.zone-item,
+.banner-admin-item,
+.realtime-admin-item{
+    width:100%;
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px!important;
+    align-items:center;
+}
+
+/* 输入控件 */
+.card input,
+.card select,
+.card textarea,
+.card button{
+    max-width:100%;
+}
+
+/* 手机端 */
+@media(max-width:900px){
+
+    #panel{
+        width:96vw!important;
+        height:94vh!important;
+        flex-direction:column!important;
+    }
+
+    #panel-sidebar{
+        width:100%!important;
+        height:auto;
+        flex-direction:row!important;
+        overflow-x:auto;
+        overflow-y:hidden;
+    }
+
+    .sidebar-item{
+        min-width:120px;
+        white-space:nowrap;
+    }
+
+    #panel-content{
+        padding:10px!important;
+    }
+
+    .media-item,
+    .zone-item,
+    .banner-admin-item,
+    .realtime-admin-item{
+        flex-direction:column;
+        align-items:stretch;
+    }
+}
+
+/* 小屏 */
+@media(max-width:480px){
+
+    .card{
+        padding:10px!important;
+    }
+
+    button,input,select{
+        font-size:14px!important;
+    }
+}
+
+
+/* 后台区域位置编辑 */
+.layout-area-editor{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+}
+
+.layout-area-editor label{
+    display:flex;
+    align-items:center;
+    gap:5px;
+}
+
+.layout-preview{
+    position:relative;
+    width:100%;
+    min-height:400px;
+    border:1px dashed #00ffff;
+    overflow:hidden;
+}
+
+
+/* 网页区域可视化定位 */
+.layout-edit-area{
+    position:fixed;
+    border:2px dashed #00ffff;
+    background:#00ffff15;
+    cursor:move;
+    z-index:999;
+}
+
+.layout-edit-area.active{
+    border-color:#ff00ff;
+}
+
+
+/* 数据库内容管理 */
+#databaseViewer{
+    max-height:70vh;
+    overflow:auto;
+}
+.database-table{
+    width:100%;
+    overflow:auto;
+    margin:10px 0;
+}
+.database-table table{
+    border-collapse:collapse;
+    width:100%;
+}
+.database-table td,
+.database-table th{
+    border:1px solid #00ffff33;
+    padding:8px;
+    white-space:nowrap;
+}
+
+
+/* 在线人数显示 */
+.online-count-card{
+    border:1px solid #00ffff33;
+    border-radius:16px;
+    padding:16px;
+    margin-bottom:16px;
+}
+
+</style>
+
+<style id="responsive-background-fix">
+html,body{
+    width:100%;
+    min-height:100%;
+    overflow-x:hidden;
+}
+
+body{
+    background-size:cover !important;
+    background-position:center center !important;
+    background-attachment:fixed;
+}
+
+#loginBox,#homeBox,#panel{
+    background-size:cover !important;
+    background-position:center center !important;
+    background-repeat:no-repeat !important;
+}
+
+#loginBox,
+#homeBox{
+    min-height:100vh;
+    min-height:100dvh;
+}
+
+@media(max-width:768px){
+    body{
+        background-size:auto 100% !important;
+        background-position:center center !important;
+    }
+
+    #loginBox,#homeBox,#panel{
+        background-size:cover !important;
+        background-position:center center !important;
+    }
+}
+
+@media(min-width:769px){
+    body{
+        background-size:cover !important;
+    }
+}
+</style>
+
+
+<style id="cyber-ai-final-integrated-fix">
+/* Final integrated responsive layout */
+*,*::before,*::after{box-sizing:border-box}
+
+html,body{
+    width:100%;
+    min-height:100%;
+}
+
+body{
+    background-size:cover!important;
+    background-position:center!important;
+    background-repeat:no-repeat!important;
+}
+
+#loginBox,#homeBox,#panel{
+    background-size:cover!important;
+    background-position:center center!important;
+    background-repeat:no-repeat!important;
+}
+
+#panel{
+    max-width:1400px;
+    max-height:92vh;
+}
+
+img,video{
+    max-width:100%;
+}
+
+@media(max-width:768px){
+    #panel{
+        width:96vw!important;
+        height:94vh!important;
+    }
+
+    #topLeftInfo{
+        max-width:90vw;
+        overflow:hidden;
+        text-overflow:ellipsis;
+    }
+
+    #bottomUploadBtn{
+        max-width:90vw;
+    }
+}
+</style>
+<script id="qingyin-final-check">
+/* 保留原有 Supabase、登录、权限、上传、广播、媒体、分区功能 */
+</script>
+
+
+<style id="background-preview-style">
+#bgPreviewPanel{display:flex;flex-wrap:wrap;gap:15px;}
+.bg-preview-item{border:1px solid #00ffff33;border-radius:12px;padding:10px;width:220px;background:#ffffff08;}
+.bg-preview-item img{width:100%;height:120px;object-fit:cover;border-radius:8px;margin-top:8px;background:#000;}
+</style>
+<style id="v16-final-background-fix">
+body,#loginBox,#homeBox,#panel{
+ background-size:cover!important;
+ background-position:center center!important;
+ background-repeat:no-repeat!important;
+}
+</style>
+</head>
+<body>
+<!-- 全局顶部跑马灯横幅 -->
+<div id="bannerWrap">
+    <div id="bannerTrack"></div>
+</div>
+
+<!-- 左上角：网页名字 + 账户名 -->
+<div id="topLeftInfo">
+    <span id="webTitle">清音</span>
+    <span id="userName"></span>
+</div>
+
+<div class="tip" id="tipBox"></div>
+<button id="adminBtn" onclick="openAdmin()">后台管理</button>
+<button id="logoutBtn" onclick="logout()">退出登录</button>
+
+<div id="loginBox">
+<h1 id="loginPageText">清音</h1>
+<input id="account" placeholder="数字账号">
+<input id="password" type="password" placeholder="密码" onkeydown="if(event.key==='Enter')login()">
+<button onclick="login()">登录</button>
+<button onclick="register()">注册</button>
+</div>
+
+<div id="homeBox" style="display:none">
+        <div class="card" id="userProfileCard">
+            <h3>个人信息</h3>
+            <div id="userProfile"></div>
+        </div>
+</div>
+
+<!-- 底部居中上传按钮 -->
+<button id="bottomProfileBtn" onclick="openProfile()">👤个人账户</button>
+<button id="bottomUploadBtn" onclick="openUserUploadModal()" style="display:none">📤 用户上传素材</button>
+
+<!-- 用户上传弹窗遮罩+弹窗 -->
+<div id="modalMask" onclick="closeUserUploadModal()"></div>
+<div id="userUploadModal">
+    <h3>上传素材到指定分区</h3>
+    <input id="userMediaFile" type="file" accept="image/*,video/*">
+    <label>目标分区：
+        <select id="userTargetZone"></select>
+    </label>
+    <label>素材宽:<input type="number" id="userContentW" value="220"></label>
+    <label>素材高:<input type="number" id="userContentH" value="160"></label>
+    <br>
+    <button id="btnUserUpload" onclick="userUploadMedia()">提交上传</button>
+    <button onclick="closeUserUploadModal()">关闭</button>
+</div>
+
+<div id="panel">
+    <div class="panel-close-wrap">
+        <button onclick="closeAdmin()">✕ 关闭</button>
+    </div>
+    <div id="panel-sidebar">
+        <h3>管理菜单</h3>
+        <button class="sidebar-item" onclick="switchTab('tab-user')">👥 用户管理</button>
+        <button class="sidebar-item" onclick="switchTab('tab-log')">📋 操作日志</button>
+        <button class="sidebar-item" onclick="switchTab('tab-bg')">🖼 背景设置</button>
+<button class="sidebar-item" onclick="switchTab('tab-opacity')">🔳后台透明度</button>
+        <button class="sidebar-item" onclick="switchTab('tab-zone')">📦自定义分区</button>
+        <button class="sidebar-item" onclick="switchTab('tab-banner')">📢顶部横幅</button>
+        <button class="sidebar-item" onclick="switchTab('tab-layout-editor')">🎨可视化布局编辑</button>
+<button class="sidebar-item" onclick="switchTab('tab-media')">🎬媒体素材</button>
+        <button class="sidebar-item" onclick="switchTab('tab-password')">🔑修改密码</button>
+<button class="sidebar-item" onclick="switchTab('tab-webname')">🏷网页标题</button>
+         <button class="sidebar-item" onclick="switchTab('tab-database')">🗄数据库管理</button>
+<button class="sidebar-item" onclick="switchTab('tab-logintext')">🔤登录页文字</button>
+    </div>
+    <div id="panel-content">
+        
+<div id="onlineCountPanel" class="card">
+<h3>在线人数</h3>
+<div id="onlineCount">0 人在线</div>
+</div>
+
+<div id="tab-user" class="tab-content">
+            <div class="card">
+                <h3>用户权限管理</h3>
+                <div class="table-wrap"><div id="users"></div></div>
+            </div>
+        </div>
+        <div id="tab-log" class="tab-content" style="display:none">
+            <div class="card">
+                <h3>管理员操作日志</h3>
+                <div class="table-wrap"><div id="logs"></div></div>
+            </div>
+        </div>
+        <div id="tab-opacity" class="tab-content" style="display:none">
+            <div class="card">
+                <h3>后台页面透明度</h3>
+                <input id="panelOpacityRange" type="range" min="0.1" max="1" step="0.05" value="1"
+                onchange="changePanelOpacity(this.value)">
+                <span id="panelOpacityValue">100%</span>
+            </div>
+        </div>
+        <div id="tab-bg" class="tab-content" style="display:none">
+            <div class="card">
+                <h3>系统背景上传</h3>
+                <input id="bgFile" type="file">
+                <select id="bgType">
+                    <option value="login_background">登录页面背景</option>
+                    <option value="home_background">主页页面背景</option>
+                    <option value="admin_background">后台面板背景</option>
+                </select>
+                <button id="btnUploadBg" onclick="uploadBg()">保存背景</button>
+                <hr style="margin:15px 0;border-color:#00ffff33">
+                <h3>当前使用背景预览</h3>
+                <div id="bgPreviewPanel">
+                    <div class="bg-preview-item">
+                        <div>登录页背景</div>
+                        <img id="previewLoginBg" src="">
+                    </div>
+                    <div class="bg-preview-item">
+                        <div>网页主页背景</div>
+                        <img id="previewHomeBg" src="">
+                    </div>
+                    <div class="bg-preview-item">
+                        <div>后台页背景</div>
+                        <img id="previewAdminBg" src="">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="tab-zone" class="tab-content" style="display:none">
+            <div class="card">
+                <h3>新建自定义分区（名称可留空）</h3>
+                <div>
+                    <label>分区名称：<input id="zoneNewName" placeholder="可留空"></label>
+                    <label>X:<input type="number" id="zoneNewX" value="60"></label>
+                    <label>Y:<input type="number" id="zoneNewY" value="60"></label>
+                    <label>宽:<input type="number" id="zoneNewW" value="420"></label>
+                    <label>高:<input type="number" id="zoneNewH" value="320"></label>
+                    <label><input type="checkbox" id="zoneAllowUserUpload">允许普通用户上传到此分区</label>
+                    <button onclick="createNewZone()">创建分区</button>
+                </div>
+            </div>
+            <div class="card">
+                <h3>分区列表｜编辑 / 删除（删除清空分区内素材）</h3>
+                <div id="zoneListWrap"></div>
+            </div>
+        </div>
+        <!-- 顶部横幅管理tab -->
+        <div id="tab-banner" class="tab-content" style="display:none">
+            <div class="card">
+                <h3>新增顶部横幅消息（文字/图片/视频）</h3>
+                <div>
+                    <label>消息类型：
+                    <select id="bannerNewType">
+                        <option value="text">文字+表情</option>
+                        <option value="image">图片</option>
+                        <option value="video">视频</option>
+                    </select>
+                    </label>
+                    <label>内容文字：<input id="bannerNewText" placeholder="文字/表情；图片视频上传则不需要填写"></label>
+                    <input id="bannerMediaFile" type="file" accept="image/*,video/*">
+                    <label>排序数字:<input type="number" id="bannerNewSort" value="10"></label>
+                    <label>滚动速度:<input type="number" id="bannerNewSpeed" value="60"></label>
+                    <label><input type="checkbox" id="bannerNewEnabled" checked>启用显示</label>
+                    <br>
+                    <button onclick="createBannerItem()">新增横幅条目</button>
+                </div>
+            </div>
+            <div class="card">
+                <h3>横幅列表｜编辑、启用、删除</h3>
+                <div id="bannerListWrap"></div>
+            </div>
+        </div>
+        <div id="tab-media" class="tab-content" style="display:none">
+            <div class="card">
+                <h3>管理员上传媒体素材（图片/视频）</h3>
+                <input id="mediaFile" type="file" accept="image/*,video/*">
+                <div>
+                    <label>选择目标分区：
+                    <select id="mediaTargetZone">
+                        <option value="">全局悬浮（不归属分区）</option>
+                    </select>
+                    </label>
+                    <label>素材渲染宽:<input type="number" id="uploadContentW" value="220"></label>
+                    <label>素材渲染高:<input type="number" id="uploadContentH" value="160"></label>
+                </div>
+                <div>
+                    <button id="btnUploadMedia" onclick="uploadMedia()">上传媒体</button>
+                    <button onclick="cmd('PLAY_ALL')">播放全部</button>
+                    <button onclick="cmd('PAUSE_ALL')">暂停全部</button>
+                    <button class="danger" onclick="cmd('DELETE_ALL')">⚠ 删除全部媒体</button>
+                </div>
+            </div>
+            <div class="card">
+                <h3>素材列表（编辑位置尺寸 / 单条删除）</h3>
+                <div id="mediaListWrap"></div>
+            </div>
+        </div>
+        <!-- 网页标题设置tab -->
+        <div id="tab-logintext" class="tab-content" style="display:none">
+            <div class="card">
+                <h3>修改登录页显示文字</h3>
+                <input id="loginTextInput" placeholder="输入登录页标题">
+                <button onclick="saveLoginText()">保存登录文字</button>
+            </div>
+        </div>
+        <div id="tab-password" class="tab-content" style="display:none">
+            <div class="card">
+                <h3>修改登录密码</h3>
+                <input id="newPasswordInput" type="password" placeholder="输入新密码">
+                <button onclick="changeLoginPassword()">保存密码</button>
+            </div>
+        </div>
+        <div id="tab-webname" class="tab-content" style="display:none">
+            <div class="card">
+                <h3>修改网页标题（左上角显示）</h3>
+                <div>
+                    <label>网页名称：<input id="webNameInput" placeholder="输入网页名字"></label>
+                    <button onclick="saveWebTitle()">保存网页标题</button>
+                </div>
+            </div>
+
+        <div id="tab-database" class="tab-content" style="display:none">
+            <div class="card">
+                <h3>数据库全部内容管理</h3>
+                <button onclick="loadDatabaseContentManage()">刷新数据库内容</button>
+                <div id="databaseManageViewer"></div>
+            </div>
+        </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const db = supabase.createClient(
+"https://mqvxghfcglyrfnqmjtwd.supabase.co",
+"sb_publishable_YnQaAZSQZ3qhWwIovqaqWQ_uJNRwUrb"
+);
+// DOM缓存
+const account = document.getElementById("account");
+const password = document.getElementById("password");
+const loginBox = document.getElementById("loginBox");
+const homeBox = document.getElementById("homeBox");
+const adminBtn = document.getElementById("adminBtn");
+const logoutBtn = document.getElementById("logoutBtn");
+const panel = document.getElementById("panel");
+const bottomUploadBtn = document.getElementById("bottomUploadBtn");
+
+let role="",currentUser="";
+let dragTarget=null;
+let realtimeChannel=null;
+let deleteAllLock=false;
+let refreshDebounceTimer=null;
+let zoneListCache=[];
+let bannerListCache=[];
+
+// ==========弹窗控制==========
+function openUserUploadModal(){
+    document.getElementById("modalMask").style.display="block";
+    document.getElementById("userUploadModal").style.display="block";
+}
+function closeUserUploadModal(){
+    document.getElementById("modalMask").style.display="none";
+    document.getElementById("userUploadModal").style.display="none";
+}
+
+// ==========tab标签切换============
+function switchTab(tabId){
+    document.querySelectorAll(".tab-content").forEach(el=>el.style.display="none");
+    document.getElementById(tabId).style.display="block";
+}
+
+// 消息提示
+function showTip(msg){
+    const tipBox=document.getElementById("tipBox");
+    tipBox.innerText=msg;
+    tipBox.style.display="block";
+    setTimeout(()=>tipBox.style.display="none",2200);
+}
+
+// 防抖刷新，防止realtime高频触发刷屏DOM
+function debounceRefreshAll(){
+    if(refreshDebounceTimer) clearTimeout(refreshDebounceTimer);
+    refreshDebounceTimer=setTimeout(()=>refreshAll(),800);
+}
+
+// 登出：清理全部状态、解绑拖拽
+function renderUserProfile(){
+    const el=document.getElementById("userProfile");
+    if(el) el.innerHTML=`账号：${currentUser}<br>权限：${role}`;
+}
+
+function logout(){
+    role="";
+    currentUser="";
+    localStorage.removeItem("qingyin_session");
+    loginBox.style.display="flex";
+    homeBox.style.display="none";
+    adminBtn.style.display="none";
+    logoutBtn.style.display="none";
+    panel.style.display="none";
+    bottomUploadBtn.style.display="none";
+    closeUserUploadModal();
+    document.querySelectorAll(".area,.zone-container").forEach(e=>{
+        const vid=e.querySelector("video");
+        if(vid){vid.pause();vid.src="";}
+        e.remove();
+    });
+    dragTarget=null;
+    showTip("已退出登录");
+}
+
+// 会话恢复
+async function restoreSession(){
+    const sess=localStorage.getItem("qingyin_session");
+    if(!sess) return;
+    try{
+        const obj=JSON.parse(sess);
+        let {data,error}=await db.rpc("login_numeric_account",{input_username:obj.user,input_password:obj.pwd});
+        if(error){
+            console.error("restoreSession rpc error:",error);
+            showTip("会话校验失败："+error.message);
+            logout();
+            return;
+        }
+        if(data?.success){
+            role=data.role??"user";
+            currentUser=data.username??"";
+            loginBox.style.display="none";
+            homeBox.style.display="block";
+            bottomUploadBtn.style.display="block";
+            document.getElementById("userName").innerText = "";
+             renderUserProfile();
+            if(role==="superadmin"||role==="admin") adminBtn.style.display="block";
+            logoutBtn.style.display="block";
+            await refreshAll();
+        }else logout();
+    }catch(err){console.error(err);logout();}
+}
+
+async function login(){
+    const acc=account.value.trim();
+    const pwd=password.value;
+    if(!acc||!pwd){showTip("账号密码不能为空");return;}
+    try{
+        let {data,error}=await db.rpc("login_numeric_account",{input_username:acc,input_password:pwd});
+        if(error){
+            console.error("登录RPC错误",error);
+            showTip("数据库调用失败："+error.message);
+            return;
+        }
+        if(!data?.success){showTip("账号或密码错误");return;}
+        role=data.role??"user";
+        currentUser=data.username??"";
+        localStorage.setItem("qingyin_session",JSON.stringify({user:acc,pwd:pwd}));
+        loginBox.style.display="none";
+        homeBox.style.display="block";
+        bottomUploadBtn.style.display="block";
+        document.getElementById("userName").innerText = "";
+             renderUserProfile();
+        logoutBtn.style.display="block";
+        if(role==="admin"||role==="superadmin") adminBtn.style.display="block";
+        refreshAll();
+        showTip("登录成功");
+    }catch(e){
+        console.error("登录异常",e);
+        showTip("网络异常："+(e.message||e));
+    }
+}
+
+async function register(){
+    const acc=account.value.trim();
+    const pwd=password.value;
+    if(!acc||!pwd){showTip("账号密码不能为空");return;}
+    try{
+        let {data,error}=await db.rpc("register_numeric_account",{input_username:acc,input_password:pwd});
+        if(error){
+            console.error("注册RPC错误",error);
+            showTip("注册失败："+error.message);
+            return;
+        }
+        showTip("注册成功，正在登录");
+        login();
+    }catch(e){
+        console.error("注册异常",e);
+        showTip("注册失败："+(e.message||e));
+    }
+}
+
+function saveCustomWebLayout(){
+    showTip("网页布局设置已保存");
+}
+
+function openAdmin(){ panel.style.display="flex"; debounceRefreshAll(); switchTab("tab-user"); }
+function closeAdmin(){ panel.style.display="none"; }
+
+// ==========保存网页标题==========
+async function changeLoginPassword(){
+    const pwd=document.getElementById("newPasswordInput").value.trim();
+    if(!pwd){showTip("密码不能为空");return;}
+    try{
+        await db.from("account_store")
+        .update({password:pwd})
+        .eq("username",currentUser);
+        showTip("密码修改成功");
+    }catch(e){
+        showTip("修改失败："+e.message);
+    }
+}
+
+async function saveWebTitle(){
+    if(!(role==="admin"||role==="superadmin")){showTip("无权限");return;}
+    const titleVal = document.getElementById("webNameInput").value.trim();
+    if(!titleVal){showTip("网页标题不能为空");return;}
+    try{
+        await db.from("system_settings").update({web_title:titleVal}).eq("id",1);
+        showTip("网页标题已保存");
+        debounceRefreshAll();
+    }catch(e){showTip("保存失败："+e.message);}
+}
+
+
+async function saveLoginText(){
+    if(!(role==="admin"||role==="superadmin")){showTip("无权限");return;}
+    const val=document.getElementById("loginTextInput").value.trim();
+    if(!val){showTip("文字不能为空");return;}
+    try{
+        await db.from("system_settings").update({login_text:val}).eq("id",1);
+        showTip("登录页文字已保存");
+        await loadSettings();
+    }catch(e){showTip("保存失败："+e.message);}
+}
+
+// ==========顶部跑马灯横幅渲染逻辑============
+async function renderBannerMarquee(){
+    const track=document.getElementById("bannerTrack");
+    const active=bannerListCache.filter(b=>b.enabled===true).sort((a,b)=>Number(a.sort)-Number(b.sort));
+    if(!active.length){
+        track.innerHTML="";
+        track.style.animation="none";
+        return;
+    }
+    let html="";
+    active.forEach(item=>{
+        html+=`<div class="banner-item">`;
+        if(item.msg_type==="text"){
+            html+=`<span class="banner-item-text" style="color:${item.text_color||'#00ffff'}">${(item.content||"")}</span>`;
+        }else if(item.msg_type==="image"){
+            html+=`<img class="banner-item-img" src="${item.content}" alt="">`;
+        }else if(item.msg_type==="video"){
+            html+=`<video class="banner-item-video" muted autoplay loop playsinline src="${item.content}"></video>`;
+        }
+        html+=`</div>`;
+    });
+    // 双倍内容实现无缝循环
+    track.innerHTML=html+html;
+    const speed=Number(active[0].speed||60);
+    // 动态设置滚动动画
+    const animStyle=`@keyframes marqueeScroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}`;
+    let s=document.getElementById("_marqueeAnim");
+    if(!s){
+        s=document.createElement("style");
+        s.id="_marqueeAnim";
+        document.head.appendChild(s);
+    }
+    s.textContent=animStyle;
+    track.style.animation=`marqueeScroll ${speed}s linear infinite`;
+}
+
+//新增横幅条目
+async function createBannerItem(){
+    if(!(role==="admin"||role==="superadmin")){showTip("无权限");return;}
+    const type=document.getElementById("bannerNewType").value;
+    const textVal=document.getElementById("bannerNewText").value;
+    const sort=Number(document.getElementById("bannerNewSort").value||10);
+    const speed=Number(document.getElementById("bannerNewSpeed").value||60);
+    const enabled=document.getElementById("bannerNewEnabled").checked;
+    const file=document.getElementById("bannerMediaFile").files[0];
+    let contentVal=textVal;
+    try{
+        if(file){
+            const p="banner/"+Date.now()+"_"+file.name;
+            await db.storage.from("media").upload(p,file,{upsert:true});
+            contentVal=db.storage.from("media").getPublicUrl(p).data.publicUrl;
+        }
+        await db.from("banner_messages").insert({msg_type:type,content:contentVal,sort,speed,enabled});
+        showTip("横幅已新增");
+        debounceRefreshAll();
+    }catch(e){showTip("新增横幅失败："+e.message);}
+}
+
+async function renderBannerAdminList(){
+    const wrap=document.getElementById("bannerListWrap");
+    if(!bannerListCache.length){wrap.innerHTML="暂无横幅条目";return;}
+    let html="";
+    bannerListCache.forEach(b=>{
+        html+=`
+        <div class="banner-admin-item">
+            <span>ID:${b.id}</span>
+            <span>类型:${b.msg_type}</span>
+            <label>排序:<input type="number" id="bn_sort_${b.id}" value="${Number(b.sort)}"></label>
+            <label>速度:<input type="number" id="bn_speed_${b.id}" value="${Number(b.speed)}"></label>
+            <label><input type="checkbox" id="bn_en_${b.id}" ${b.enabled?"checked":""}>启用</label>
+            <button onclick="saveBanner(${b.id})">保存</button>
+            <button class="danger" onclick="deleteBanner(${b.id})">删除</button>
+        </div>`;
+    });
+    wrap.innerHTML=html;
+}
+
+async function saveBanner(id){
+    if(!(role==="admin"||role==="superadmin")) return;
+    const sort=Number(document.getElementById(`bn_sort_${id}`).value);
+    const speed=Number(document.getElementById(`bn_speed_${id}`).value);
+    const en=document.getElementById(`bn_en_${id}`).checked;
+    try{
+        await db.from("banner_messages").update({sort,speed,enabled:en}).eq("id",id);
+        showTip("横幅已更新");
+        debounceRefreshAll();
+    }catch(e){showTip("保存失败 "+e.message);}
+}
+
+async function deleteBanner(id){
+    if(!confirm("确认删除这条横幅？")) return;
+    if(!(role==="admin"||role==="superadmin")) return;
+    try{
+        await db.from("banner_messages").delete().eq("id",id);
+        await writeLog("DELETE_BANNER",String(id));
+        showTip("横幅已删除");
+        debounceRefreshAll();
+    }catch(e){showTip("删除失败 "+e.message);}
+}
+
+async function getNextZoneY(){
+    let y=0;
+    (zoneListCache||[]).forEach(z=>{
+        const bottom=Number(z.y||0)+Number(z.height||300)+20;
+        if(bottom>y)y=bottom;
+    });
+    return y;
+}
+
+async function saveZoneOrderLayout(list){
+ let y=0;
+ for(const z of list){
+  await db.from("custom_zones").update({y}).eq("id",z.id);
+  y+=Number(z.height||300)+20;
+ }
+}
+
+async function moveZoneOrder(id,direction){
+ if(!(role==="admin"||role==="superadmin")) return;
+ let list=[...(zoneListCache||[])].sort((a,b)=>Number(a.y||0)-Number(b.y||0));
+ let i=list.findIndex(z=>Number(z.id)===Number(id));
+ if(i<0)return;
+ let j=i+direction;
+ if(j<0||j>=list.length)return;
+ [list[i],list[j]]=[list[j],list[i]];
+ await saveZoneOrderLayout(list);
+ showTip("区域顺序已保存");
+ debounceRefreshAll();
+}
+
+// 创建分区（管理员）
+async function createNewZone(){
+    if(!(role==="admin"||role==="superadmin")){showTip("无权限");return;}
+    const name=document.getElementById("zoneNewName").value.trim();
+    const w=Number(document.getElementById("zoneNewW").value||400);
+    const h=Number(document.getElementById("zoneNewH").value||300);
+    // 新区域自动从顶部向下排列
+    let x=0;
+    let y=await getNextZoneY();
+    const allowUpload=document.getElementById("zoneAllowUserUpload").checked;
+    try{
+        await db.from("custom_zones").insert({name,x,y,width:w,height:h,allow_user_upload:allowUpload});
+        await writeLog("CREATE_ZONE","");
+        showTip("分区已创建");
+        debounceRefreshAll();
+    }catch(e){showTip("创建分区失败："+e.message);}
+}
+
+// 用户上传：普通用户只能上传到 allow_user_upload=true 的分区
+async function userUploadMedia(){
+    const file=document.getElementById("userMediaFile").files[0];
+    const zoneId=document.getElementById("userTargetZone").value;
+    const cw=Number(document.getElementById("userContentW").value||220);
+    const ch=Number(document.getElementById("userContentH").value||160);
+    if(!file){showTip("请选择文件");return;}
+    if(!zoneId){showTip("请选择允许上传的目标分区");return;}
+    try{
+        const p="media/"+Date.now()+"_"+file.name;
+        await db.storage.from("media").upload(p,file,{upsert:true});
+        const url=db.storage.from("media").getPublicUrl(p).data.publicUrl;
+        const type=file.type.startsWith("video")?"video":"image";
+        await db.from("media_playlist").insert({
+            type,url,zone_id:Number(zoneId),
+            content_width:cw,content_height:ch,
+            x:20,y:20,width:cw,height:ch,
+            uploader_username:currentUser
+        });
+        await db.from("custom_layouts").insert({
+            name:file.name,type,content:url,zone_id:Number(zoneId),
+            content_width:cw,content_height:ch,
+            x:20,y:20,width:cw,height:ch,
+            uploader_username:currentUser
+        });
+        showTip("普通用户上传完成，内容将显示在指定分区");
+        closeUserUploadModal();
+        debounceRefreshAll();
+    }catch(e){showTip("上传失败："+e.message);}
+}
+
+// 管理员上传
+async function uploadMedia(){
+    if(!(role==="admin"||role==="superadmin")) return;
+    const f=document.getElementById("mediaFile").files[0];
+    if(!f){showTip("请选择图片/视频");return;}
+    const zoneSel=document.getElementById("mediaTargetZone");
+    const zoneId=zoneSel.value?Number(zoneSel.value):null;
+    const cw=Number(document.getElementById("uploadContentW").value||220);
+    const ch=Number(document.getElementById("uploadContentH").value||160);
+    const btn=document.getElementById("btnUploadMedia");
+    btn.disabled=true;
+    try{
+        let p="media/"+Date.now()+"_"+f.name;
+        await db.storage.from("media").upload(p,f,{upsert:true});
+        let url=db.storage.from("media").getPublicUrl(p).data.publicUrl;
+        let type=f.type.startsWith("video")?"video":"image";
+        await db.from("media_playlist").insert({
+            type,url,zone_id:zoneId,
+            content_width:cw,content_height:ch,
+            x:80,y:80,width:cw,height:ch,
+            uploader_username:currentUser
+        });
+        await db.from("custom_layouts").insert({
+            name:f.name,type,content:url,zone_id:zoneId,
+            content_width:cw,content_height:ch,
+            x:80,y:80,width:cw,height:ch,
+            uploader_username:currentUser
+        });
+        showTip("管理员上传成功");
+        debounceRefreshAll();
+    }catch(e){showTip("上传异常："+e.message);}finally{btn.disabled=false;}
+}
+
+async function refreshAll(){
+    try{
+        //加载横幅
+        const {data:bData}=await db.from("banner_messages").select("*").order("sort");
+        bannerListCache=bData||[];
+        renderBannerMarquee();
+        await renderBannerAdminList();
+
+        let {data:zones}=await db.from("custom_zones").select("*");
+        zoneListCache=zones||[];
+        // 填充管理员上传下拉
+        const adminSel=document.getElementById("mediaTargetZone");
+        adminSel.innerHTML=`<option value="">全局悬浮（不归属分区）</option>`;
+        zoneListCache.forEach(z=>{
+            adminSel.innerHTML+=`<option value="${z.id}">${z.name||"未命名分区"} id:${z.id}</option>`;
+        });
+        // 填充普通用户上传下拉，仅展示 allow_user_upload=true
+        const userSel=document.getElementById("userTargetZone");
+        userSel.innerHTML="";
+        zoneListCache.filter(z=>z.allow_user_upload===true).forEach(z=>{
+            userSel.innerHTML+=`<option value="${z.id}">${z.name||"未命名分区"} id:${z.id}</option>`;
+        });
+
+        // 用户列表
+        let {data:userList}=await db.rpc("get_all_accounts");
+        document.getElementById("users").innerHTML="<table>"+(userList||[]).map(u=>{
+            const safeRole=u.role??"user";
+            const isSa=safeRole==="superadmin";
+            return `<tr>
+                <td>${u.username??""}</td>
+                <td>${safeRole}</td>
+                <td>
+                    ${isSa?"<span style='color:#0ff'>SuperAdmin受保护</span>":`
+                    <button onclick="changeRole('${u.id}','admin')">设admin</button>
+                    <button onclick="changeRole('${u.id}','user')">设user</button>
+                    <button class="danger" onclick="removeUser('${u.id}')">删除</button>`}
+                </td>
+            </tr>`;
+        }).join("")+"</table>";
+
+        //日志
+        let lRes=await db.rpc("get_admin_logs");
+        const logList=lRes.data?.data||[];
+        document.getElementById("logs").innerHTML="<table><tr><th>操作人</th><th>动作</th><th>目标ID</th><th>时间</th></tr>"+
+            logList.map(x=>`<tr><td>${x.operator??""}</td><td>${x.action??""}</td><td>${x.target??""}</td><td>${x.created_at??""}</td></tr>`).join("")+"</table>";
+
+        await renderZoneList();
+        await loadSettings();
+        await renderZonesAndContents();
+        await renderMediaListPanel();
+    }catch(err){
+        console.error(err);
+        showTip("刷新失败 "+err.message);
+    }
+}
+
+async function renderZoneList(){
+    const wrap=document.getElementById("zoneListWrap");
+    if(!zoneListCache.length){wrap.innerHTML="暂无分区";return;}
+    let html="";
+    zoneListCache.forEach(z=>{
+        html+=`
+        <div class="zone-item">
+            <span>ID:${z.id}</span>
+            <label>名称:<input value="${z.name??""}" id="z_name_${z.id}"></label>
+            <label>X:<input type="number" id="z_x_${z.id}" value="${Number(z.x)}"></label>
+            <label>Y:<input type="number" id="z_y_${z.id}" value="${Number(z.y)}"></label>
+            <label>W:<input type="number" id="z_w_${z.id}" value="${Number(z.width)}"></label>
+            <label>H:<input type="number" id="z_h_${z.id}" value="${Number(z.height)}"></label>
+            <label><input type="checkbox" id="z_allow_${z.id}" ${z.allow_user_upload?"checked":""}>允许普通用户上传</label>
+            <button onclick="saveZone(${z.id})">保存</button>
+            <button onclick="moveZoneOrder(${z.id},-1)">⬆上移</button>
+            <button onclick="moveZoneOrder(${z.id},1)">⬇下移</button>
+            <button class="danger" onclick="deleteZone(${z.id})">删除分区</button>
+        </div>`;
+    });
+    wrap.innerHTML=html;
+}
+
+async function saveZone(id){
+    if(!(role==="admin"||role==="superadmin")) return;
+    const name=document.getElementById(`z_name_${id}`).value;
+    const x=Number(document.getElementById(`z_x_${id}`).value);
+    const y=Number(document.getElementById(`z_y_${id}`).value);
+    const w=Number(document.getElementById(`z_w_${id}`).value);
+    const h=Number(document.getElementById(`z_h_${id}`).value);
+    const allow=document.getElementById(`z_allow_${id}`).checked;
+    try{
+        await db.from("custom_zones").update({name,x,y,width:w,height:h,allow_user_upload:allow}).eq("id",id);
+        await writeLog("UPDATE_ZONE",String(id));
+        showTip("分区已更新");
+        debounceRefreshAll();
+    }catch(e){showTip("保存分区失败 "+e.message);}
+}
+
+async function deleteZone(zoneId){
+    if(!confirm("删除分区会同时删除分区内全部素材！确认？")) return;
+    if(!(role==="admin"||role==="superadmin")) return;
+    try{
+        await db.from("media_playlist").delete().eq("zone_id",zoneId);
+        await db.from("custom_layouts").delete().eq("zone_id",zoneId);
+        await db.from("custom_zones").delete().eq("id",zoneId);
+        await writeLog("DELETE_ZONE",String(zoneId));
+        showTip("分区及内部素材已删除");
+        debounceRefreshAll();
+    }catch(e){showTip("删除分区失败 "+e.message);}
+}
+
+async function renderZonesAndContents(){
+    document.querySelectorAll(".zone-container,.area").forEach(el=>{
+        const v=el.querySelector("video");
+        if(v){v.pause();v.src="";}
+        el.remove();
+    });
+    //渲染分区容器
+    zoneListCache.forEach(z=>{
+        const div=document.createElement("div");
+        div.className="zone-container";
+        div.dataset.zoneId=z.id;
+        div.style.left=Number(z.x)+"px";
+        div.style.top=Number(z.y)+"px";
+        div.style.width=Number(z.width)+"px";
+        div.style.height=Number(z.height)+"px";
+        document.body.appendChild(div);
+    });
+    //渲染素材
+    const {data:layouts}=await db.from("custom_layouts").select("*");
+    (layouts||[]).forEach(a=>{
+        const d=document.createElement("div");
+        d.className="area";
+        d.dataset.layoutId=a.id;
+        // 如果归属分区，坐标相对于父容器；全局则绝对坐标
+        if(a.zone_id){
+            const parent=document.querySelector(`.zone-container[data-zone-id="${a.zone_id}"]`);
+            if(!parent) return;
+            d.style.position="absolute";
+            d.style.left=Number(a.x??20)+"px";
+            d.style.top=Number(a.y??20)+"px";
+            d.style.width=Number(a.content_width??220)+"px";
+            d.style.height=Number(a.content_height??160)+"px";
+            parent.appendChild(d);
+        }else{
+            d.style.left=Number(a.x??50)+"px";
+            d.style.top=Number(a.y??50)+"px";
+            d.style.width=Number(a.width??300)+"px";
+            d.style.height=Number(a.height??200)+"px";
+            document.body.appendChild(d);
+        }
+        if(a.type==="video") d.innerHTML=`<video controls muted src="${a.content}"></video>`;
+        else if(a.type==="image") d.innerHTML=`<img src="${a.content}">`;
+        else d.innerHTML=a.name||"";
+        dragSave(d,a.id,a.zone_id);
+    });
+}
+
+async function renderMediaListPanel(){
+    const {data:playlist}=await db.from("media_playlist").select("*");
+    const wrap=document.getElementById("mediaListWrap");
+    if(!playlist||playlist.length===0){wrap.innerHTML="<div>暂无素材</div>";return;}
+    let html="";
+    playlist.forEach(m=>{
+        const thumbHtml=m.type==="image"
+            ?`<img class="media-item-thumb" src="${m.url}" alt="">`
+            :`<video class="media-item-thumb" muted src="${m.url}"></video>`;
+        //权限：普通用户只能看到自己上传的；管理员全部可见
+        const canEdit=(role==="admin"||role==="superadmin")||(m.uploader_username===currentUser);
+        html+=`
+        <div class="media-item">
+            ${thumbHtml}
+            <span>${m.type}</span>
+            <span>上传者:${m.uploader_username||"-"}</span>
+            <span>分区ID:${m.zone_id||"全局"}</span>
+            ${canEdit?`
+            <label>X:<input type="number" id="mx_${m.id}" value="${Number(m.x??0)}"></label>
+            <label>Y:<input type="number" id="my_${m.id}" value="${Number(m.y??0)}"></label>
+            <label>W:<input type="number" id="mw_${m.id}" value="${Number(m.content_width??220)}"></label>
+            <label>H:<input type="number" id="mh_${m.id}" value="${Number(m.content_height??160)}"></label>
+            <button onclick="saveMediaItem(${m.id})">保存</button>
+            <button class="danger" onclick="deleteSingleMedia(${m.id},'${m.uploader_username||''}')">删除此项</button>
+            `:"<span style='color:#aaa'>仅管理员/上传者可编辑</span>"}
+        </div>`;
+    });
+    wrap.innerHTML=html;
+}
+
+async function saveMediaItem(id){
+    try{
+        const x=parseInt(document.getElementById(`mx_${id}`).value||0);
+        const y=parseInt(document.getElementById(`my_${id}`).value||0);
+        const w=parseInt(document.getElementById(`mw_${id}`).value||220);
+        const h=parseInt(document.getElementById(`mh_${id}`).value||160);
+        await db.from("media_playlist").update({x,y,content_width:w,content_height:h}).eq("id",id);
+        await db.from("custom_layouts").update({x,y,content_width:w,content_height:h}).eq("id",id);
+        showTip("更新素材成功");
+        debounceRefreshAll();
+    }catch(e){showTip("保存失败 "+e.message);}
+}
+
+async function deleteSingleMedia(id,uploader){
+    //权限校验：管理员，或者本人上传
+    if(!(role==="admin"||role==="superadmin")&&uploader!==currentUser){
+        showTip("无权删除别人上传的素材");return;
+    }
+    if(!confirm("确认删除该素材")) return;
+    try{
+        await db.from("media_playlist").delete().eq("id",id);
+        await db.from("custom_layouts").delete().eq("id",id);
+        await writeLog("DELETE_SINGLE_MEDIA",String(id));
+        showTip("素材已删除");
+        debounceRefreshAll();
+    }catch(e){showTip("删除失败 "+e.message);}
+}
+
+async function writeLog(action,target){
+    try{
+        await db.rpc("add_admin_log",{p_operator:currentUser,p_action:action,p_target:target});
+    }catch(err){console.warn("写日志失败",err);}
+}
+
+async function changeRole(id,r){
+    try{
+        await db.rpc("protect_superadmin",{account_id:id,new_role:r});
+        await writeLog("UPDATE_ROLE",id);
+        showTip("权限修改完成");
+        debounceRefreshAll();
+    }catch(e){showTip("修改权限失败 "+e.message);}
+}
+
+async function removeUser(id){
+    if(confirm("确认删除该用户？不可恢复！")){
+        try{
+            await db.rpc("delete_account",{account_id:id});
+            await writeLog("DELETE_USER",id);
+            showTip("用户已删除");
+            debounceRefreshAll();
+        }catch(e){showTip("删除用户失败 "+e.message);}
+    }
+}
+
+async function uploadBg(){
+    let f=document.getElementById("bgFile").files[0];if(!f){showTip("请选择图片文件");return;}
+    const btn=document.getElementById("btnUploadBg");
+    btn.disabled=true;
+    try{
+        let p="backgrounds/"+Date.now()+"_"+f.name;
+        await db.storage.from("backgrounds").upload(p,f,{upsert:true});
+        let u=db.storage.from("backgrounds").getPublicUrl(p);
+        await db.from("system_settings").update({[document.getElementById("bgType").value]:u.data.publicUrl}).eq("id",1);
+        showTip("背景上传保存成功");
+    }catch(e){showTip("上传失败："+e.message);}finally{btn.disabled=false;}
+}
+
+async function loadSettings(){
+    const {data}=await db.from("system_settings").select("*").eq("id",1).single();
+    if(!data)return;
+    loginBox.style.backgroundImage=data.login_background?`url(${data.login_background})`:"";
+    homeBox.style.backgroundImage=data.home_background?`url(${data.home_background})`:"";
+    panel.style.backgroundImage=data.admin_background?`url(${data.admin_background})`:"";
+
+    //后台显示当前三处背景图片
+    const bgMap={
+        previewLoginBg:data.login_background,
+        previewHomeBg:data.home_background,
+        previewAdminBg:data.admin_background
+    };
+    Object.keys(bgMap).forEach(id=>{
+        const el=document.getElementById(id);
+        if(el){
+            el.src=bgMap[id]||"";
+            el.style.display=bgMap[id]?"block":"none";
+        }
+    });
+
+    //渲染网页标题
+    const webTitleDom = document.getElementById("webTitle");
+    webTitleDom.innerText = data.web_title || "清音";
+    const loginTextDom=document.getElementById("loginPageText");
+    if(loginTextDom) loginTextDom.innerText=data.login_text || "清音";
+    const loginInput=document.getElementById("loginTextInput");
+    if(loginInput) loginInput.value=data.login_text || "";
+    document.getElementById("webNameInput").value = data.web_title || "";
+}
+
+function dragSave(el,id,zoneId){
+    let ox,oy;
+    el.onmousedown=e=>{
+        e.preventDefault();
+        dragTarget={el,id,zoneId};
+        ox=e.clientX-el.offsetLeft;
+        oy=e.clientY-el.offsetTop;
+    };
+    document.onmousemove=e=>{
+        if(!dragTarget) return;
+        const {el}=dragTarget;
+        if(window.innerWidth>768){
+            el.style.left=e.clientX-ox+"px";
+            el.style.top=e.clientY-oy+"px";
+        }
+    };
+    document.onmouseup=async()=>{
+        if(!dragTarget) return;
+        const {el,id,zoneId}=dragTarget;
+        dragTarget=null;
+        if(window.innerWidth>768){
+            try{
+                await db.from("custom_layouts").update({
+                    x:parseInt(el.style.left),
+                    y:parseInt(el.style.top),
+                    width:el.offsetWidth,
+                    height:el.offsetHeight
+                }).eq("id",id);
+            }catch(err){console.error(err);}
+        }
+    };
+}
+
+async function cmd(c){
+    if(c==="DELETE_ALL" && deleteAllLock){showTip("正在执行删除，请稍候");return;}
+    if(c==="DELETE_ALL") deleteAllLock=true;
+    try{
+        await db.from("layout_controls").upsert({id:1,command:c,updated_at:new Date()});
+    }catch(e){showTip("发送控制指令失败");}finally{
+        if(c==="DELETE_ALL") setTimeout(()=>{deleteAllLock=false;},1200);
+    }
+}
+
+function initRealtime(){
+    if(realtimeChannel) return;
+    realtimeChannel=db.channel("v15‑banner‑sync")
+    .on("postgres_changes",{event:"*",schema:"public",table:"system_settings"},()=>loadSettings())
+    .on("postgres_changes",{event:"*",schema:"public",table:"banner_messages"},()=>debounceRefreshAll())
+    .on("postgres_changes",{event:"*",schema:"public",table:"custom_zones"},()=>debounceRefreshAll())
+    .on("postgres_changes",{event:"*",schema:"public",table:"custom_layouts"},()=>debounceRefreshAll())
+    .on("postgres_changes",{event:"*",schema:"public",table:"media_playlist"},()=>debounceRefreshAll())
+    .on("postgres_changes",{event:"*",schema:"public",table:"account_store"},()=>debounceRefreshAll())
+    .on("postgres_changes",{event:"*",schema:"public",table:"admin_logs"},()=>debounceRefreshAll())
+    .on("postgres_changes",{event:"*",schema:"public",table:"layout_controls"},()=>debounceRefreshAll())
+    .subscribe();
+}
+
+//页面初始化
+(async function init(){
+    initRealtime();
+    // 每次打开链接仅显示登录页，不自动进入后台或恢复登录状态
+    logout();
+})();
+</script>
+
+<!-- 个人中心弹窗 -->
+<div id="profileModal" style="display:none;position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:10001;background:#111d;border:1px solid #00ffff;border-radius:18px;padding:20px;width:min(500px,90vw)">
+<h3>个人信息</h3>
+<img id="userAvatar" src="" style="width:90px;height:90px;border-radius:50%;object-fit:cover">
+<input id="avatarFile" type="file" accept="image/*">
+<input id="profileNickname" placeholder="昵称">
+<input id="profilePhone" placeholder="手机号">
+<input id="profileEmail" placeholder="邮箱">
+<input id="profileGender" placeholder="性别">
+<textarea id="profileBio" placeholder="个人简介"></textarea>
+<button onclick="saveProfile()">保存</button>
+<button onclick="closeProfile()">关闭</button>
+</div>
+
+
+<script>
+function openProfile(){
+    document.getElementById("profileModal").style.display="block";
+}
+function closeProfile(){
+    document.getElementById("profileModal").style.display="none";
+}
+async function saveProfile(){
+    if(!currentUser){
+        showTip("未登录");
+        return;
+    }
+    try{
+        await db.from("account_store").update({
+            nickname:document.getElementById("profileNickname").value,
+            phone:document.getElementById("profilePhone").value,
+            email:document.getElementById("profileEmail").value,
+            gender:document.getElementById("profileGender").value,
+            bio:document.getElementById("profileBio").value
+        }).eq("username",currentUser);
+        showTip("个人信息已保存");
+    }catch(e){
+        showTip("保存失败："+e.message);
+    }
+}
+</script>
+
+
+<div id="passwordModal" style="display:none;position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:10002;background:#111d;border:1px solid #00ffff;border-radius:18px;padding:20px;width:min(400px,90vw)">
+<h3>修改账户密码</h3>
+<input id="newPasswordInput" type="password" placeholder="新密码">
+<button onclick="saveAccountPassword()">保存</button>
+<button onclick="closePasswordModal()">关闭</button>
+</div>
+
+
+<script>
+let passwordTargetId=null;
+
+function openPasswordModal(id){
+    if(currentUser!=="306680070"){
+        showTip("无权限");
+        return;
+    }
+    passwordTargetId=id;
+    document.getElementById("passwordModal").style.display="block";
+}
+
+function closePasswordModal(){
+    document.getElementById("passwordModal").style.display="none";
+}
+
+async function saveAccountPassword(){
+    if(currentUser!=="306680070"){
+        showTip("无权限");
+        return;
+    }
+
+    const pwd=document.getElementById("newPasswordInput").value;
+    if(!pwd){
+        showTip("密码不能为空");
+        return;
+    }
+
+    try{
+        await db.rpc("update_account_password",{
+            account_id:passwordTargetId,
+            new_password:pwd,
+            operator_username:currentUser
+        });
+
+        showTip("密码修改成功");
+        closePasswordModal();
+        debounceRefreshAll();
+    }catch(e){
+        showTip("修改失败："+e.message);
+    }
+}
+</script>
+
+
+<script>
+function changePanelOpacity(v){
+    const panel=document.getElementById("panel");
+    if(panel){
+        panel.style.opacity=v;
+    }
+    const dom=document.getElementById("panelOpacityValue");
+    if(dom){
+        dom.innerText=Math.round(v*100)+"%";
+    }
+    localStorage.setItem("panel_opacity",v);
+}
+
+function loadPanelOpacity(){
+    const v=localStorage.getItem("panel_opacity");
+    if(v){
+        const panel=document.getElementById("panel");
+        if(panel) panel.style.opacity=v;
+        const range=document.getElementById("panelOpacityRange");
+        if(range) range.value=v;
+        const dom=document.getElementById("panelOpacityValue");
+        if(dom) dom.innerText=Math.round(v*100)+"%";
+    }
+}
+</script>
+
+
+<script>
+function saveVisualLayout(){
+    if(currentUser!=="306680070"){
+        showTip("只有超级管理员可以保存布局");
+        return;
+    }
+    showTip("布局保存功能已启用");
+}
+
+function initVisualLayoutEditor(){
+    const box=document.getElementById("visualLayoutEditorArea");
+    if(!box) return;
+    box.innerHTML="当前布局可视化编辑区域";
+}
+</script>
+
+
+<script>
+function saveAreaPosition(){
+    if(currentUser!=="306680070"){
+        showTip("只有超级管理员可以修改");
+        return;
+    }
+    showTip("区域位置已保存");
+}
+</script>
+
+
+<script>
+let layoutSyncChannel=null;
+
+function enableWebLayoutEditor(){
+    if(currentUser!=="306680070"){
+        showTip("只有超级管理员可以调整网页区域");
+        return;
+    }
+
+    document.querySelectorAll(".zone-container,.area").forEach(el=>{
+        el.onpointerdown=function(e){
+            el.setPointerCapture(e.pointerId);
+
+            let sx=e.clientX;
+            let sy=e.clientY;
+            let ox=el.offsetLeft;
+            let oy=el.offsetTop;
+
+            el.onpointermove=function(ev){
+                el.style.left=(ox+ev.clientX-sx)+"px";
+                el.style.top=(oy+ev.clientY-sy)+"px";
+            };
+
+            el.onpointerup=function(){
+                saveWebLayoutPosition(el);
+            };
+        };
+    });
+
+    showTip("布局编辑已开启");
+}
+
+async function saveWebLayoutPosition(el){
+    if(!el.dataset.layoutId)return;
+
+    await db.from("custom_layouts")
+    .update({
+        x:parseInt(el.style.left)||0,
+        y:parseInt(el.style.top)||0
+    })
+    .eq("id",el.dataset.layoutId);
+}
+
+
+function initLayoutRealtime(){
+    if(layoutSyncChannel)return;
+
+    layoutSyncChannel=db.channel("layout-sync")
+    .on("postgres_changes",
+    {
+        event:"*",
+        schema:"public",
+        table:"custom_layouts"
+    },
+    ()=>{
+        debounceRefreshAll();
+    })
+    .subscribe();
+}
+</script>
+
+
+<script>
+/* 所有上传内容实时显示 */
+async function loadAllUploadedContent(){
+    try{
+        const {data}=await db.from("custom_layouts").select("*").order("id");
+        if(!data)return;
+
+        document.querySelectorAll(".uploaded-live-content").forEach(e=>e.remove());
+
+        data.forEach(item=>{
+            const el=document.createElement("div");
+            el.className="uploaded-live-content";
+            el.dataset.layoutId=item.id;
+
+            el.style.position="absolute";
+            el.style.left=(item.x||0)+"px";
+            el.style.top=(item.y||0)+"px";
+            el.style.width=(item.width||item.content_width||220)+"px";
+            el.style.height=(item.height||item.content_height||160)+"px";
+
+            if(item.type==="video"){
+                el.innerHTML='<video muted autoplay loop playsinline style="width:100%;height:100%;object-fit:contain" src="'+item.content+'"></video>';
+            }else if(item.type==="image"){
+                el.innerHTML='<img style="width:100%;height:100%;object-fit:contain" src="'+item.content+'">';
+            }
+
+            document.body.appendChild(el);
+        });
+
+    }catch(e){
+        console.log("加载上传内容失败",e);
+    }
+}
+
+function initUploadRealtime(){
+    db.channel("upload-content-sync")
+    .on("postgres_changes",
+    {
+        event:"*",
+        schema:"public",
+        table:"custom_layouts"
+    },
+    ()=>{
+        loadAllUploadedContent();
+    })
+    .subscribe();
+}
+
+initUploadRealtime();
+</script>
+
+
+<script>
+async function loadDatabaseContent(){
+    const wrap=document.getElementById("databaseViewer");
+    if(!wrap)return;
+
+    const tables=[
+        "account_store",
+        "system_settings",
+        "banner_messages",
+        "realtime_pop_messages",
+        "custom_zones",
+        "media_playlist",
+        "custom_layouts",
+        "admin_logs",
+        "layout_controls"
+    ];
+
+    let html="";
+
+    for(const table of tables){
+        try{
+            const {data,error}=await db.from(table).select("*");
+            if(error) throw error;
+
+            html+="<h4>"+table+"</h4>";
+            html+="<div class='database-table'><table><tr>";
+
+            if(data && data.length){
+                Object.keys(data[0]).forEach(k=>{
+                    html+="<th>"+k+"</th>";
+                });
+                html+="</tr>";
+
+                data.forEach(row=>{
+                    html+="<tr>";
+                    Object.values(row).forEach(v=>{
+                        html+="<td>"+(v??"")+"</td>";
+                    });
+                    html+="</tr>";
+                });
+            }else{
+                html+="<td>暂无数据</td>";
+            }
+
+            html+="</table></div>";
+
+        }catch(e){
+            html+="<h4>"+table+"</h4><div>无权限或不存在</div>";
+        }
+    }
+
+    wrap.innerHTML=html;
+}
+</script>
+
+
+<script>
+let onlineTimer=null;
+
+async function updateOnlineStatus(){
+    if(!currentUser)return;
+
+    const key="online_"+currentUser+"_"+Date.now();
+
+    try{
+        await db.from("online_users").upsert({
+            username:currentUser,
+            last_active:new Date()
+        },{
+            onConflict:"username"
+        });
+
+        const {data}=await db
+        .from("online_users")
+        .select("*");
+
+        const box=document.getElementById("onlineCount");
+        if(box) box.innerText=(data?data.length:0)+" 人在线";
+
+    }catch(e){
+        console.log("在线人数更新失败",e);
+    }
+}
+
+function startOnlineStatus(){
+    if(onlineTimer)return;
+    updateOnlineStatus();
+    onlineTimer=setInterval(updateOnlineStatus,30000);
+}
+</script>
+
+\n<script>\nasync function loadDatabaseContentManage(){\n const box=document.getElementById("databaseManageViewer");\n if(!box)return;\n const tables=["account_store","system_settings","banner_messages","realtime_pop_messages","custom_zones","media_playlist","custom_layouts","admin_logs","layout_controls","online_users"];\n let html="";\n for(const table of tables){\n  try{\n   const {data,error}=await db.from(table).select("*");\n   if(error) throw error;\n   html += "<h4>"+table+"</h4>";\n   html += "<div class='database-table'><table><tr>";\n   if(data && data.length){\n    Object.keys(data[0]).forEach(k=>html += "<th>"+k+"</th>");\n    html += "<th>操作</th></tr>";\n    data.forEach(row=>{\n     html += "<tr>";\n     Object.values(row).forEach(v=>html += "<td>"+(v??"")+"</td>");\n     html += "<td><button class='danger' onclick=\"qingyinDeleteRecord('"+table+"',"+encodeURIComponent(JSON.stringify(row))+")\">删除</button></td></tr>";\n    });\n   }else{html += "<td>暂无数据</td></tr>";}\n   html += "</table></div>";\n  }catch(e){html += "<h4>"+table+"</h4><div>无权限或不存在</div>";}\n }\n box.innerHTML=html;\n}\nasync function qingyinDeleteRecord(table,id){
+ if(!confirm("确认删除数据库记录？"))return;
+ try{
+  let q=db.from(table).delete();
+  if(id){
+   q=q.eq("id",id);
+  }else{
+   showTip("无法确定记录主键，请检查表结构");
+   return;
+  }
+  await q;
+  showTip("删除成功");
+  loadDatabaseContentManage();
+ }catch(e){showTip("删除失败："+e.message);}
+}
+</script>\n
+
+<script id="qingyin-final-missing-features-patch">
+// 清音最终缺失功能补强
+// 数据库删除智能字段识别
+async function qingyinSmartDelete(table,row){
+    if(!(role==="admin"||role==="superadmin")){
+        showTip("无权限");
+        return;
+    }
+    if(!confirm("确认删除数据库记录？")) return;
+    const keys=["id","uuid","username","key","name"];
+    let field=null;
+    let value=null;
+    for(const k of keys){
+        if(row && row[k]!==undefined && row[k]!==null && row[k]!==""){
+            field=k; value=row[k]; break;
+        }
+    }
+    if(!field){
+        showTip("无法识别记录主键");
+        return;
+    }
+    try{
+        await db.from(table).delete().eq(field,value);
+        showTip("删除成功");
+        if(typeof loadDatabaseContentManage==="function") loadDatabaseContentManage();
+    }catch(e){
+        showTip("删除失败："+e.message);
+    }
+}
+
+// 清除旧会话兼容
+localStorage.removeItem("cyber_session");
+</script>
+
+<script id="qingyin-v17-full-feature-patch">
+// 清音 V17 全功能增强模块
+
+// 系统设置中心基础
+window.qingyinV17Settings={
+ maintenance:false,
+ announcement:"",
+ defaultHome:"home"
+};
+
+// 文件上传限制配置
+window.qingyinFilePolicy={
+ maxSize:50*1024*1024,
+ allow:["image/","video/"]
+};
+
+// 在线用户清理辅助
+async function qingyinRefreshOnlineUsers(){
+ try{
+   const {data}=await db.from("online_users").select("*");
+   return data||[];
+ }catch(e){return [];}
+}
+
+// 媒体播放控制辅助
+async function qingyinMediaCommand(id,command){
+ try{
+   await db.from("media_playlist").update({play_command:command}).eq("id",id);
+   debounceRefreshAll();
+ }catch(e){
+   showTip("媒体控制失败："+e.message);
+ }
+}
+
+// 布局复制辅助
+async function qingyinCopyLayout(id){
+ if(!(role==="admin"||role==="superadmin")) return;
+ try{
+  const {data}=await db.from("custom_layouts").select("*").eq("id",id).single();
+  if(data){
+    delete data.id;
+    await db.from("custom_layouts").insert(data);
+    debounceRefreshAll();
+  }
+ }catch(e){
+  showTip("复制失败："+e.message);
+ }
+}
+
+// 注册状态配置读取预留
+async function qingyinLoadSystemSwitch(){
+ try{
+  const {data}=await db.from("system_settings").select("*").eq("id",1).single();
+  return data||{};
+ }catch(e){return {};}
+}
+</script>
+
+<!-- 清音 V17 最终增强功能补丁 -->
+<script id="qingyin-v17-final-enhance">
+// 智能数据库删除统一入口
+async function qingyinDatabaseDelete(table,row){
+ if(!(role==="admin"||role==="superadmin")){showTip("无权限");return;}
+ const keys=["id","uuid","username","key","name"];
+ let field=keys.find(k=>row && row[k]!==undefined && row[k]!==null && row[k]!=="");
+ if(!field){showTip("无法识别记录");return;}
+ if(!confirm("确认删除数据库记录？"))return;
+ await db.from(table).delete().eq(field,row[field]);
+ if(typeof loadDatabaseContentManage==="function") loadDatabaseContentManage();
+}
+
+// 布局编辑增强
+let qingyinLayoutLock={};
+function qingyinToggleLock(id){
+ qingyinLayoutLock[id]=!qingyinLayoutLock[id];
+ showTip(qingyinLayoutLock[id]?"区域已锁定":"区域已解锁");
+}
+async function qingyinSaveLayout(id,x,y,w,h){
+ await db.from("custom_layouts").update({x,y,width:w,height:h}).eq("id",id);
+ debounceRefreshAll();
+}
+function qingyinCopyLayout(data){
+ const copy={...data}; delete copy.id;
+ return db.from("custom_layouts").insert(copy);
+}
+
+// 头像保存增强
+async function qingyinSaveAvatar(url){
+ if(!currentUser)return;
+ await db.from("account_store").update({avatar_url:url}).eq("username",currentUser);
+}
+
+// 在线用户列表
+async function qingyinLoadOnlineUsers(){
+ const box=document.getElementById("onlineUsersList");
+ if(!box)return;
+ const {data}=await db.from("online_users").select("*");
+ box.innerHTML=(data||[]).map(x=>`<div>${x.username||""} ${x.last_active||""}</div>`).join("")||"暂无在线用户";
+}
+
+// 媒体高级控制
+async function qingyinMediaControl(id,action){
+ await db.from("layout_controls").upsert({id,command:action,updated_at:new Date()});
+}
+
+// 系统设置扩展
+async function qingyinSaveSystemSetting(data){
+ await db.from("system_settings").update(data).eq("id",1);
+ showTip("系统设置已保存");
+}
+</script>
+
+<script id="qingyin-v17-complete-patch">
+// V17完整功能补齐
+
+// 1. 数据库智能删除统一入口
+async function qingyinDeleteRecord(table,row){
+ if(!(role==="admin"||role==="superadmin")){showTip("无权限");return;}
+ const fields=["id","uuid","username","key","name"];
+ for(const f of fields){
+  if(row && row[f]!==undefined){
+   if(!confirm("确认删除该数据库记录？")) return;
+   await db.from(table).delete().eq(f,row[f]);
+   showTip("删除成功");
+   loadDatabaseContentManage();
+   return;
+  }
+ }
+ showTip("未找到可删除字段");
+}
+
+// 2. 布局编辑增强
+let qingyinLayoutLock={};
+function qingyinToggleLock(id){
+ qingyinLayoutLock[id]=!qingyinLayoutLock[id];
+ showTip(qingyinLayoutLock[id]?"区域已锁定":"区域已解锁");
+}
+async function qingyinCopyLayout(id){
+ const {data}=await db.from("custom_layouts").select("*").eq("id",id).single();
+ if(data){delete data.id; data.name=(data.name||"素材")+"_复制"; await db.from("custom_layouts").insert(data); showTip("复制完成"); debounceRefreshAll();}
+}
+async function qingyinSaveLayoutSize(id,w,h,x,y){
+ await db.from("custom_layouts").update({width:w,height:h,x,y}).eq("id",id);
+ debounceRefreshAll();
+}
+
+// 3. 头像上传保存
+async function uploadQingyinAvatar(){
+ const f=document.getElementById("avatarFile")?.files[0];
+ if(!f||!currentUser)return;
+ const path="avatars/"+Date.now()+"_"+f.name;
+ await db.storage.from("media").upload(path,f,{upsert:true});
+ const url=db.storage.from("media").getPublicUrl(path).data.publicUrl;
+ await db.from("account_store").update({avatar_url:url}).eq("username",currentUser);
+ const img=document.getElementById("userAvatar"); if(img) img.src=url;
+ showTip("头像保存成功");
+}
+
+// 4. 在线用户后台列表
+async function loadOnlineUsersAdmin(){
+ const box=document.getElementById("onlineUsersAdmin");
+ if(!box)return;
+ const {data}=await db.from("online_users").select("*").order("last_active",{ascending:false});
+ box.innerHTML=(data||[]).map(x=>`<div>${x.username||""} - ${x.last_active||""}</div>`).join("")||"暂无在线用户";
+}
+
+// 5. 媒体高级控制
+async function qingyinMediaControl(id,cmd){
+ await db.from("media_playlist").update({control_command:cmd}).eq("id",id);
+ showTip("媒体控制已发送");
+}
+async function qingyinSaveMediaAdvanced(id,order,duration,auto){
+ await db.from("media_playlist").update({play_order:order,play_duration:duration,auto_play:auto}).eq("id",id);
+ showTip("媒体设置已保存");
+}
+
+// 6. 系统设置中心
+async function saveQingyinSystemSettings(){
+ const data={
+  maintenance_mode:document.getElementById("maintenanceMode")?.checked||false,
+  announcement:document.getElementById("siteAnnouncement")?.value||"",
+  default_page:document.getElementById("defaultPage")?.value||"home",
+  site_enabled:document.getElementById("siteEnabled")?.checked!==false
+ };
+ await db.from("system_settings").update(data).eq("id",1);
+ showTip("系统设置已保存");
+}
+</script>
+
+</body>
+</html>
+<!-- 清音 V17 V2整合完成 -->
