@@ -150,8 +150,8 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let currentUser = null;
 const tabs = document.querySelectorAll('.tab');
-tabs.forEach(t=>t.onclick=()=>switchTab(t.dataset.tab));
-const debugLog = document.getElementById("debugLog");
+const SUPABASE_URL = "https://mqvxghfcglyrfnqmjtwd.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_YnQaAZSQZ3qhWwIovqaqWQ_uJNRwUrb";
 function log(msg){
   debugLog.innerText += msg + "\n";
   console.log(msg);
