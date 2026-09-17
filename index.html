@@ -1,10 +1,9 @@
 
-
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
 <title>清音 V19-P0Fix｜安全修复完整版</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.8"></script>
 <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
@@ -12,23 +11,23 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--global-opacity:1;--primary:#00ffff;--danger:#ff4466;--bg:#020617;--card:#ffffff08}
-body{margin:0;padding-top:42px;padding-bottom:80px;min-height:100vh;background:var(--bg);color:#fff;font-family:system-ui,-apple-system,sans-serif;background-repeat:no-repeat;background-size:cover;background-position:center;overflow-x:hidden;opacity:var(--global-opacity);transition:opacity .35s}
-button,input,select,textarea{padding:12px 10px;margin:6px 4px;border-radius:12px;background:#ffffff18;color:#fff;border:1px solid var(--primary);font-size:16px;touch-action:manipulation}
+body{margin:0;padding-top:calc(42px + env(safe-area-inset-top));padding-bottom:calc(80px + env(safe-area-inset-bottom));min-height:100vh;background:var(--bg);color:#fff;font-family:system-ui,-apple-system,sans-serif;background-repeat:no-repeat;background-size:cover;background-position:center;overflow-x:hidden;opacity:var(--global-opacity);transition:opacity .35s}
+button,input,select,textarea{padding:12px 10px;margin:6px 4px;border-radius:12px;background:#ffffff18;color:#fff;border:1px solid var(--primary);font-size:16px;touch-action:manipulation;max-width:100%}
 button{cursor:pointer;min-height:44px;transition:.2s}
 button:hover{filter:brightness(1.1)}
 button.danger{border-color:var(--danger);color:#ff8899;background:#ff22441a}
 button:disabled{opacity:.4;cursor:not-allowed}
-#adminBtn{display:none;position:fixed;right:16px;top:16px;z-index:99}
-#logoutBtn{display:none;position:fixed;right:16px;top:64px;z-index:99}
-#bannerWrap{position:fixed;left:0;top:0;width:100%;height:40px;z-index:9998;overflow:hidden;background:#000c;will-change:transform}
+#adminBtn{display:none;position:fixed;right:16px;top:calc(16px + env(safe-area-inset-top));z-index:99}
+#logoutBtn{display:none;position:fixed;right:16px;top:calc(64px + env(safe-area-inset-top));z-index:99}
+#bannerWrap{position:fixed;left:0;top:0;width:100%;height:40px;z-index:9998;overflow:hidden;background:#000c;will-change:transform;padding-top:env(safe-area-inset-top)}
 #bannerTrack{height:100%;display:flex;align-items:center;white-space:nowrap;will-change:transform}
 .banner-item{display:inline-flex;align-items:center;padding:0 32px;height:100%;gap:8px}
 .banner-item-text{font-size:clamp(13px,2vw,16px)}
 .banner-item-img{height:28px;width:auto;object-fit:contain;border-radius:4px}
 .banner-item-video{height:32px;width:auto;border-radius:4px}
-#bottomUploadBtn{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:998;padding:14px 32px;font-size:17px}
-#bottomProfileBtn{position:fixed;left:16px;bottom:24px;z-index:999;padding:12px 20px}
-#panel{display:none;position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(1400px,96vw);height:min(900px,92vh);border-radius:24px;border:1px solid var(--primary);background:#111d;z-index:999;overflow:hidden;flex-direction:row}
+#bottomUploadBtn{position:fixed;bottom:calc(24px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:998;padding:14px 32px;font-size:17px;max-width:calc(100vw - 32px)}
+#bottomProfileBtn{position:fixed;left:16px;bottom:calc(24px + env(safe-area-inset-bottom));z-index:999;padding:12px 20px}
+#panel{display:none;position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(1400px,96vw);height:min(900px,calc(92vh - env(safe-area-inset-top) - env(safe-area-inset-bottom)));border-radius:24px;border:1px solid var(--primary);background:#111d;z-index:999;overflow:hidden;flex-direction:row}
 #panel-sidebar{width:240px;flex-shrink:0;border-right:1px solid #00ffff33;padding:20px 12px;display:flex;flex-direction:column;gap:8px;overflow-y:auto}
 #panel-sidebar h3{margin:4px 0 16px;text-align:center;color:var(--primary)}
 .sidebar-item{width:100%;text-align:left}
@@ -56,50 +55,50 @@ button:disabled{opacity:.4;cursor:not-allowed}
 .area{position:absolute;border:1px solid var(--primary);background:#ffffff18;resize:both;overflow:hidden}
 .area.drag-enabled{cursor:move}
 .area img,.area video{object-fit:cover;width:100%;height:100%}
-#loginBox,#homeBox{background-repeat:no-repeat;background-size:cover;background-color:var(--bg);background-position:center}
-#loginBox{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:40px 20px;gap:12px}
+#loginBox,#homeBox,#panel{background-repeat:no-repeat;background-size:cover;background-color:var(--bg);background-position:center}
+#loginBox{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:calc(40px + env(safe-area-inset-top)) 20px;gap:12px}
 #loginBox h1{margin-bottom:30px;font-size:clamp(28px,5vw,52px)}
 #loginBox input{width:min(420px,90vw);height:48px;font-size:16px}
 #loginBox button{width:min(420px,90vw);height:48px}
 #homeBox{min-height:100vh;padding:20px;display:block;position:relative;overflow:visible}
-.toast-container{position:fixed;left:50%;top:24px;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+.toast-container{position:fixed;left:50%;top:calc(24px + env(safe-area-inset-top));transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;gap:6px;pointer-events:none}
 .toast{background:#00ffff33;border:1px solid var(--primary);padding:10px 24px;border-radius:12px;animation:toastIn .25s}
 .toast.err{border-color:var(--danger);background:#ff224422}
 .toast.warn{background:#ffaa0022;border-color:#ffaa00}
 @keyframes toastIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
 #modalMask{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:9999}
 #userUploadModal,#publicChatModal,#webgameRunModal,#profileModal,#passwordModal,#noticeModal{z-index:10000}
-#userUploadModal{display:none;position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(620px,92vw);border-radius:18px;border:1px solid var(--primary);background:#111d;padding:20px;max-height:88vh;overflow:auto}
-#publicChatModal{display:none;position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(540px,92vw);height:min(620px,80vh);background:#0b1220f2;border:1px solid var(--primary);border-radius:18px;flex-direction:column;overflow:hidden}
+#userUploadModal{display:none;position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(620px,92vw);border-radius:18px;border:1px solid var(--primary);background:#111d;padding:20px;max-height:calc(88vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));overflow:auto}
+#publicChatModal{display:none;position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(540px,92vw);height:min(620px,calc(80vh - env(safe-area-inset-top) - env(safe-area-inset-bottom)));background:#0b1220f2;border:1px solid var(--primary);border-radius:18px;flex-direction:column;overflow:hidden}
 .public-chat-head{padding:12px 16px;background:#00ffff22;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #00ffff44}
 .public-chat-box{flex:1;overflow-y:auto;padding:12px;contain:layout}
-.public-chat-input-area{display:flex;gap:8px;padding:12px;border-top:1px solid #00ffff33}
-.public-chat-input-area input{flex:1;margin:0}
+.public-chat-input-area{display:flex;gap:8px;padding:12px;border-top:1px solid #00ffff33;flex-wrap:wrap}
+.public-chat-input-area input{flex:1;margin:0;min-width:140px}
 .chat-message{margin-bottom:10px;word-break:break-word}
 .chat-sender{color:var(--primary);font-weight:bold;margin-right:6px}
 .chat-time{font-size:11px;color:#777;margin-left:6px}
-#webgameRunModal{display:none;position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(90vw,1100px);height:min(85vh,820px);background:#000;border:1px solid var(--primary);border-radius:18px;overflow:hidden}
+#webgameRunModal{display:none;position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(90vw,1100px);height:min(85vh,calc(820px - env(safe-area-inset-top) - env(safe-area-inset-bottom)));background:#000;border:1px solid var(--primary);border-radius:18px;overflow:hidden}
 .webgame-head{padding:10px 14px;background:#00ffff22;display:flex;justify-content:space-between;align-items:center}
 #webgameIframe{width:100%;height:calc(100% - 52px);border:none}
-#chatFloatBtn{display:none;position:fixed;right:20px;bottom:90px;z-index:99990;width:58px;height:58px;border-radius:50%;background:var(--primary);color:#001018;border:2px solid var(--primary);font-size:24px;align-items:center;justify-content:center;box-shadow:0 0 18px #00ffff88}
+#chatFloatBtn{display:none;position:fixed;right:20px;bottom:calc(90px + env(safe-area-inset-bottom));z-index:99990;width:58px;height:58px;border-radius:50%;background:var(--primary);color:#001018;border:2px solid var(--primary);font-size:24px;align-items:center;justify-content:center;box-shadow:0 0 18px #00ffff88}
 #chatFloatBtn .chat-badge{position:absolute;top:-4px;right:-4px;background:#ff4466;color:#fff;font-size:11px;padding:2px 7px;border-radius:999px;display:none}
-#chatModal{display:none;position:fixed;right:16px;bottom:160px;z-index:99991;width:min(380px,92vw);height:min(520px,70vh);background:#0b1220f2;border:1px solid var(--primary);border-radius:16px;flex-direction:column;overflow:hidden;box-shadow:0 8px 40px #000a}
+#chatModal{display:none;position:fixed;right:16px;bottom:calc(160px + env(safe-area-inset-bottom));z-index:99991;width:min(380px,92vw);height:min(520px,calc(70vh - env(safe-area-inset-top) - env(safe-area-inset-bottom)));background:#0b1220f2;border:1px solid var(--primary);border-radius:16px;flex-direction:column;overflow:hidden;box-shadow:0 8px 40px #000a}
 .chat-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#00ffff22;border-bottom:1px solid #00ffff44}
 .chat-head b{color:var(--primary);font-size:15px}
-.chat-tabs{display:flex;gap:6px;padding:8px 10px 0;border-bottom:1px solid #223}
+.chat-tabs{display:flex;gap:6px;padding:8px 10px 0;border-bottom:1px solid #223;flex-wrap:wrap}
 .chat-tab-btn{flex:1;padding:8px 4px;font-size:13px;min-height:36px;margin:0;background:#ffffff10;border:1px solid #223;color:#aaa;border-radius:8px}
 .chat-tab-btn.active{background:#00ffff22;color:var(--primary);border-color:var(--primary)}
 #chatMsgBox{flex:1;overflow-y:auto;padding:10px;font-size:14px;line-height:1.5}
 .chat-msg{margin-bottom:8px;word-break:break-word}
 .chat-msg .who{color:var(--primary);font-weight:bold;margin-right:6px}
 .chat-msg audio{width:100%;margin-top:4px}
-.chat-input-area{display:flex;gap:6px;padding:8px;border-top:1px solid #223;align-items:center}
-.chat-input-area input[type=text]{flex:1;margin:0;min-width:0}
+.chat-input-area{display:flex;gap:6px;padding:8px;border-top:1px solid #223;align-items:center;flex-wrap:wrap}
+.chat-input-area input[type=text]{flex:1;margin:0;min-width:140px}
 .tag-badge{position:absolute;top:2px;left:2px;z-index:5;background:#00ffffcc;color:#001018;font-size:11px;padding:2px 8px;border-radius:999px;cursor:pointer;max-width:90%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .media-download-btn{position:absolute;bottom:2px;right:2px;z-index:5;background:#000c;color:var(--primary);border:1px solid var(--primary);font-size:11px;padding:3px 8px;border-radius:6px;cursor:pointer;display:none}
 .area:hover .media-download-btn{display:block}
 .area{position:relative}
-#noticeModal{display:none;position:fixed;left:50%;top:40%;transform:translate(-50%,-50%);z-index:10003;background:#111f;border:1px solid var(--primary);border-radius:16px;padding:22px;width:min(440px,90vw);max-height:70vh;overflow-y:auto}
+#noticeModal{display:none;position:fixed;left:50%;top:40%;transform:translate(-50%,-50%);z-index:10003;background:#111f;border:1px solid var(--primary);border-radius:16px;padding:22px;width:min(440px,90vw);max-height:calc(70vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));overflow-y:auto}
 #noticeModal h3{color:var(--primary);margin-bottom:10px}
 #noticeModal .notice-body{white-space:pre-wrap;line-height:1.6;margin-bottom:14px}
 .database-table{width:100%;overflow:auto;margin:10px 0}
@@ -113,23 +112,32 @@ button:disabled{opacity:.4;cursor:not-allowed}
 .area.drag-enabled .drag-handle{display:block}
 .upload-progress-bar{height:8px;background:#111;border-radius:4px;overflow:hidden;margin:8px 0}
 .upload-progress-fill{height:100%;background:var(--primary);width:0%}
+
 @media(max-width:900px){
-  #panel{flex-direction:column;height:94vh}
+  #panel{flex-direction:column;height:calc(94vh - env(safe-area-inset-top) - env(safe-area-inset-bottom))}
   #panel-sidebar{width:100%;border-right:none;border-bottom:1px solid #00ffff33;flex-direction:row;flex-wrap:nowrap;overflow-x:auto;padding:10px;gap:6px}
   .sidebar-item{width:auto;flex-shrink:0;min-width:110px}
   .resource-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
   .area,.drag-handle{cursor:default!important;display:none!important}
 }
 @media(max-width:768px){
-  body{padding-top:36px;padding-bottom:90px}
+  body{padding-top:calc(36px + env(safe-area-inset-top));padding-bottom:calc(90px + env(safe-area-inset-bottom))}
   #bannerWrap{height:36px}
   .banner-item-img{height:24px}
   .banner-item-video{height:28px}
-  #panel{width:96vw;height:94vh}
+  #panel{width:96vw;height:calc(94vh - env(safe-area-inset-top) - env(safe-area-inset-bottom))}
   #panel-content{padding:12px}
   .zone-container,.area{position:relative!important;width:100%!important;left:auto!important;top:auto!important;margin:10px 0}
-  button,input,select{padding:12px 8px;font-size:15px}
-  #bottomUploadBtn{bottom:16px}
+  button,input,select,textarea{padding:12px 8px;font-size:15px;margin:4px 2px}
+  #bottomUploadBtn{bottom:calc(16px + env(safe-area-inset-bottom))}
+  .media-item,.zone-item,.banner-admin-item{flex-direction:column;align-items:flex-start}
+  .bg-preview-item{width:100%;max-width:260px}
+}
+@media(max-width:480px){
+  .resource-grid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}
+  .res-thumb-box{height:110px}
+  #homeBox{padding:12px}
+  .card{padding:12px}
 }
 body,#loginBox,#homeBox,#panel{background-repeat:no-repeat!important;background-position:center center!important;background-size:cover!important;background-color:var(--bg)!important}
 </style>
@@ -140,7 +148,6 @@ body,#loginBox,#homeBox,#panel{background-repeat:no-repeat!important;background-
 <div id="topLeftInfo"><span id="webTitle">清音</span><span id="userName"></span></div>
 <button id="adminBtn" onclick="openAdmin()">后台管理</button>
 <button id="logoutBtn" onclick="logout()">退出登录</button>
-
 <div id="loginBox">
 <h1 id="loginPageText">清音</h1>
 <input id="account" placeholder="数字账号">
@@ -148,7 +155,6 @@ body,#loginBox,#homeBox,#panel{background-repeat:no-repeat!important;background-
 <button onclick="login()">登录</button>
 <button onclick="register()">注册</button>
 </div>
-
 <div id="homeBox" style="display:none">
   <div style="margin:12px 0">
     <button onclick="openPublicChat()">💬全局公共聊天</button>
@@ -158,11 +164,9 @@ body,#loginBox,#homeBox,#panel{background-repeat:no-repeat!important;background-
   <div id="resourceGrid" class="resource-grid"></div>
   <div id="layoutCanvas"></div>
 </div>
-
 <button id="bottomProfileBtn" onclick="openProfile()">👤个人中心</button>
 <button id="bottomUploadBtn" onclick="openUserUploadModal()" style="display:none">📤上传资源</button>
 <div id="modalMask"></div>
-
 <div id="userUploadModal">
   <h3>上传资源</h3>
   <label>类型：<select id="uploadResType">
@@ -180,7 +184,6 @@ body,#loginBox,#homeBox,#panel{background-repeat:no-repeat!important;background-
   <button id="btnUserUpload" onclick="userUploadMedia()">提交上传</button>
   <button onclick="closeUserUploadModal()">关闭</button>
 </div>
-
 <div id="publicChatModal">
   <div class="public-chat-head">
     <b>🌐全局公共聊天</b>
@@ -192,7 +195,6 @@ body,#loginBox,#homeBox,#panel{background-repeat:no-repeat!important;background-
     <button onclick="sendPublicChat()">发送</button>
   </div>
 </div>
-
 <div id="webgameRunModal">
   <div class="webgame-head">
     <b id="webgameTitle">网页游戏</b>
@@ -201,7 +203,6 @@ body,#loginBox,#homeBox,#panel{background-repeat:no-repeat!important;background-
   <!-- P0修复：iframe sandbox安全隔离 -->
   <iframe id="webgameIframe" sandbox="allow-scripts allow-same-origin"></iframe>
 </div>
-
 <div id="panel">
   <div class="panel-close-wrap"><button onclick="closeAdmin()">✕关闭</button></div>
   <div id="panel-sidebar">
@@ -266,7 +267,7 @@ body,#loginBox,#homeBox,#panel{background-repeat:no-repeat!important;background-
       <button onclick="loadDatabaseContentManage()">刷新</button><div id="databaseManageViewer"></div></div></div>
     <div id="tab-logintext" class="tab-content" style="display:none"><div class="card"><h3>登录页文字</h3>
       <input id="loginTextInput" placeholder="登录页标题"><button onclick="saveLoginText()">保存</button></div></div>
-    <div id="tab-chat-admin" class="tab-content" style="display:none"><div class="card"><h3>聊天管理</h>
+    <div id="tab-chat-admin" class="tab-content" style="display:none"><div class="card"><h3>聊天管理</h3>
       <button class="danger" onclick="adminClearPublicChat()">清空公共聊天</button><hr style="margin:15px 0">
       <h3>全局音频</h3>
       <button onclick="globalAudioCmd('PLAY')">▶全部播放</button>
@@ -279,8 +280,7 @@ body,#loginBox,#homeBox,#panel{background-repeat:no-repeat!important;background-
     <div id="tab-online" class="tab-content" style="display:none"><div class="card"><h3>在线用户列表</h3><div id="onlineUserList"></div></div></div>
   </div>
 </div>
-
-<div id="profileModal" style="display:none;position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:10001;background:#111d;border:1px solid var(--primary);border-radius:18px;padding:20px;width:min(500px,90vw)">
+<div id="profileModal" style="display:none;position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:10001;background:#111d;border:1px solid var(--primary);border-radius:18px;padding:20px;width:min(500px,90vw);max-height:calc(88vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));overflow:auto">
 <h3>个人信息</h3>
 <img id="userAvatar" style="width:90px;height:90px;border-radius:50%;object-fit:cover">
 <input id="avatarFile" type="file" accept="image/*">
@@ -291,12 +291,10 @@ body,#loginBox,#homeBox,#panel{background-repeat:no-repeat!important;background-
 <textarea id="profileBio" placeholder="简介"></textarea>
 <button onclick="saveProfile()">保存</button><button onclick="closeProfile()">关闭</button>
 </div>
-
 <div id="noticeModal">
   <h3>📢站点公告</h3><div class="notice-body" id="noticeBody"></div>
   <button onclick="document.getElementById('noticeModal').style.display='none'">知道了</button>
 </div>
-
 <script>
 /* ================================================================
  * 清音 V19-P0Fix 安全修复版
@@ -309,18 +307,15 @@ body,#loginBox,#homeBox,#panel{background-repeat:no-repeat!important;background-
  * 6. 文件大小前后端校验
  * 7. 删除操作二次强确认
  * ================================================================ */
-
 const SUPABASE_URL = "https://mqvxghfcglyrfnqmjtwd.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xdnhnaGZjZ2x5cmZucW1qdHdkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk0ODM4NjgsImV4cCI6MjEwNTA1OTg2OH0.fkzrrGl7FTeEe0aHAjUvXjRb-DoUMnoz_XxwITvGFLk";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
 let currentUser = null, role = null;
 let realtimeChannel = null;
 let modalStack = [];
 let layoutEditMode = false;
-let refreshTimer = null;  // P0修复：realtime防抖定时器
+let refreshTimer = null;
 
-/* ---------- 工具 ---------- */
 function debounce(fn, delay=300){
   let t; return (...a)=>{clearTimeout(t); t=setTimeout(()=>fn(...a),delay)}
 }
@@ -341,7 +336,6 @@ function checkSuperAdmin(){
   return true;
 }
 
-/* ---------- 文件白名单 ---------- */
 const FILE_WL = {
   image:{ext:["jpg","jpeg","png","gif","webp"]},
   video:{ext:["mp4","webm"]},
@@ -357,7 +351,6 @@ function checkFile(file, typeKey, maxMB=50){
   return true;
 }
 
-/* ---------- DB封装 ---------- */
 const db = {
   async select(table, cols="*", filter=null){
     try{
@@ -403,7 +396,6 @@ const db = {
   }
 };
 
-/* ---------- 系统配置 ---------- */
 async function getCfg(){
   const r = await db.select("system_settings","config_json,global_opacity,public_chat",{id:1});
   if(!r.ok||!r.data[0]) return {global_opacity:1,public_chat:[]};
@@ -422,7 +414,6 @@ async function setCfg(cfg){
   return await db.update("system_settings",{config_json:cfg},{id:1});
 }
 
-/* ---------- 弹窗栈 ---------- */
 function pushModal(fn){modalStack.push(fn)}
 function popModal(){const fn=modalStack.pop();if(fn)fn()}
 document.addEventListener("keydown",e=>{if(e.key==="Escape")popModal()});
@@ -439,7 +430,6 @@ function closeProfile(){document.getElementById("profileModal").style.display="n
 function openPublicChat(){openModal("publicChatModal",closePublicChat);renderPublicChat()}
 function closePublicChat(){document.getElementById("publicChatModal").style.display="none"}
 
-/* P0修复#1: Blob URL内存泄漏 — 关闭时revokeObjectURL */
 let currentBlobUrl = null;
 function openWebgameModal(url, title){
   document.getElementById("webgameTitle").textContent = safeText(title||"网页游戏");
@@ -455,7 +445,6 @@ function closeWebgameModal(){
   if(src.startsWith("blob:")) URL.revokeObjectURL(src);
   currentBlobUrl = null;
 }
-
 function switchTab(id){
   document.querySelectorAll(".tab-content").forEach(el=>el.style.display="none");
   document.getElementById(id).style.display="block";
@@ -468,7 +457,6 @@ function openAdmin(){
 }
 function closeAdmin(){document.getElementById("panel").style.display="none"}
 
-/* ---------- 公共聊天 ---------- */
 async function renderPublicChat(){
   const cfg = await getCfg();
   const list = cfg.public_chat||[];
@@ -498,12 +486,10 @@ async function adminClearPublicChat(){
   showTip("已清空"); renderPublicChat();
 }
 
-/* ---------- 资源工具 ---------- */
 function previewMedia(u){window.open(u,"_blank")}
 function downloadResource(u,f){const a=document.createElement("a");a.href=u;a.download=f||"file";a.click()}
 function playAudio(u){new Audio(u).play().catch(()=>{})}
 
-/* ---------- ZIP解压 ---------- */
 async function unpackZip(file){
   try{
     const zip = await JSZip.loadAsync(file);
@@ -518,7 +504,6 @@ async function unpackZip(file){
   }catch(e){showErr("解压失败:"+e.message);return null}
 }
 
-/* ---------- 视频自动缩略图 ---------- */
 function videoThumb(videoFile){
   return new Promise(res=>{
     const v = document.createElement("video");
@@ -534,7 +519,6 @@ function videoThumb(videoFile){
   });
 }
 
-/* ---------- 全局视频/音频 ---------- */
 function playAllGlobalVideo(){document.querySelectorAll("video").forEach(v=>v.play().catch(()=>{}));showTip("全部视频播放")}
 function pauseAllGlobalVideo(){document.querySelectorAll("video").forEach(v=>v.pause());showTip("全部视频暂停")}
 function globalAudioCmd(cmd){
@@ -546,7 +530,6 @@ function globalAudioCmd(cmd){
   showTip("音频指令已执行");
 }
 
-/* ---------- 全站透明度 ---------- */
 async function changeGlobalOpacity(val){
   const v = Number(val);
   document.documentElement.style.setProperty("--global-opacity",v);
@@ -555,7 +538,6 @@ async function changeGlobalOpacity(val){
   await setCfg(cfg);
 }
 
-/* ---------- 分区下拉 ---------- */
 async function refreshZoneSelect(){
   const r = await db.select("custom_zones");
   if(!r.ok)return;
@@ -567,7 +549,6 @@ async function refreshZoneSelect(){
   });
 }
 
-/* ---------- 上传 ---------- */
 async function userUploadMedia(){
   if(!currentUser){showWarn("请登录");return}
   const file = document.getElementById("userMediaFile").files[0];
@@ -618,7 +599,6 @@ async function userUploadMedia(){
   finally{btn.disabled=false;bar.style.width="0%"}
 }
 
-/* ---------- 资源网格 ---------- */
 async function renderResourceGrid(){
   const grid = document.getElementById("resourceGrid");
   const r = await db.select("media_playlist");
@@ -655,8 +635,6 @@ async function renderResourceGrid(){
   grid.innerHTML=""; grid.appendChild(frag);
 }
 
-/* ---------- 登录/登出 ----------
- * P0修复#3: 不持久化密码到localStorage，刷新后需重新登录 */
 function logout(){
   currentUser=null; role=null;
   localStorage.removeItem("qingyin_session");
@@ -682,7 +660,6 @@ async function login(){
   const r = await db.rpc("login_numeric_account",{input_username:acc,input_password:pwd});
   if(!r.ok||!r.data?.success){showErr("账号或密码错误");return}
   role = r.data.role; currentUser = r.data.username;
-  /* P0修复#3: 只存用户名，不存密码 */
   localStorage.setItem("qingyin_session", JSON.stringify({user:acc, loginAt:Date.now()}));
   document.getElementById("loginBox").style.display="none";
   document.getElementById("homeBox").style.display="block";
@@ -704,7 +681,6 @@ async function register(){
   showTip("注册成功，请登录");
 }
 
-/* ---------- 跑马灯 ---------- */
 async function renderBanner(){
   const old = document.getElementById("_marqueeStyle");
   if(old) old.remove();
@@ -728,7 +704,6 @@ async function renderBanner(){
   track.style.animation = `marqueeScroll ${speed}s linear infinite`;
 }
 
-/* ---------- 加载全部配置 ---------- */
 async function loadSettings(){
   const r = await db.select("system_settings","*",{id:1});
   if(!r.ok||!r.data[0])return;
@@ -747,7 +722,6 @@ async function loadSettings(){
   document.documentElement.style.setProperty("--global-opacity", cfg.global_opacity||1);
   document.getElementById("globalOpacityRange").value = cfg.global_opacity||1;
   document.getElementById("globalOpacityValue").textContent = Math.round((cfg.global_opacity||1)*100)+"%";
-  /* 公告 */
   if(s.announcement && String(s.announcement).trim() && !localStorage.getItem("notice_read_"+s.id)){
     document.getElementById("noticeBody").textContent = safeText(s.announcement);
     document.getElementById("noticeModal").style.display = "block";
@@ -755,7 +729,6 @@ async function loadSettings(){
   }
 }
 
-/* ---------- 后台功能 ---------- */
 async function saveLoginText(){
   if(!checkSuperAdmin())return;
   const v = document.getElementById("loginTextInput").value.trim();
@@ -882,7 +855,6 @@ async function delZone(id){
   showTip("已删除"); debouncedRefresh();
 }
 
-/* ---------- 用户管理 ---------- */
 async function renderUsers(){
   const r = await db.rpc("get_all_accounts");
   const wrap = document.getElementById("users");
@@ -910,7 +882,6 @@ async function removeUser(id){
   showTip("已删除"); debouncedRefresh();
 }
 
-/* ---------- 操作日志 ---------- */
 async function renderLogs(){
   const r = await db.rpc("get_admin_logs");
   const wrap = document.getElementById("logs");
@@ -920,7 +891,6 @@ async function renderLogs(){
     list.map(x=>`<tr><td>${safeText(x.operator)}</td><td>${safeText(x.action)}</td><td>${safeText(x.target)}</td><td>${safeText(x.created_at)}</td></tr>`).join("") + "</table>";
 }
 
-/* ---------- 数据库查看 ---------- */
 const DB_TABLES = ["account_store","system_settings","banner_messages","custom_zones","custom_layouts","media_playlist","admin_logs","online_users","private_messages","layout_controls"];
 async function loadDatabaseContentManage(){
   if(!checkSuperAdmin())return;
@@ -937,229 +907,4 @@ async function loadDatabaseContentManage(){
       html += "<table><tr>"+cols.map(c=>`<th>${c}</th><th>操作</th>`).join("")+"</tr>";
       rows.forEach(row=>{
         html += "<tr>"+cols.map(c=>`<td>${safeText(typeof row[c]==="object"?JSON.stringify(row[c]).slice(0,80):row[c])}</td>`).join("")+
-          `<td><button class="danger" onclick="delDbRow('${t}',${row.id},${t==='system_settings'&&row.id===1})">删除</button></td></tr>`;
-      });
-      html += "</table>";
-    }
-    html += "</div>";
-  }
-  viewer.innerHTML = html;
-}
-async function delDbRow(table, id, protected_row){
-  if(!checkSuperAdmin())return;
-  if(protected_row){showWarn("禁止删除系统配置行");return}
-  if(!confirm(`⚠️确定永久删除 ${table} 表 id=${id} 的记录？此操作不可恢复！`))return;
-  await db.remove(table,{id}, table==="system_settings");
-  showTip("已删除"); loadDatabaseContentManage();
-}
-
-/* ---------- 资源管理 ---------- */
-async function renderAdminResources(){
-  const r = await db.select("media_playlist");
-  const wrap = document.getElementById("adminAllResourceList");
-  if(!r.ok||!r.data?.length){wrap.innerHTML="暂无";return}
-  wrap.innerHTML = r.data.map(item=>`
-    <div class="media-item">
-      <div><b>${safeText(item.name)}</b><br><small>${safeText(item.type)} · ${safeText(item.uploader_username)}</small></div>
-      <button class="danger" onclick="delResource(${item.id})">删除</button>
-    </div>`).join("");
-}
-async function delResource(id){
-  if(!checkSuperAdmin())return;
-  if(!confirm("⚠️确定删除该资源？文件将从列表移除！"))return;
-  await db.remove("media_playlist",{id});
-  await db.remove("custom_layouts",{id});
-  showTip("已删除"); debouncedRefresh();
-}
-
-/* ---------- 在线用户 ---------- */
-async function startOnline(){
-  const beat = async ()=>{
-    if(!currentUser)return;
-    try{
-      const now = new Date().toISOString();
-      const {error:updateError} = await sb
-        .from("online_users")
-        .update({last_active: now})
-        .eq("username", currentUser);
-
-      if(updateError) throw updateError;
-
-      const {data:exists} = await sb
-        .from("online_users")
-        .select("username")
-        .eq("username", currentUser)
-        .limit(1);
-
-      if(!exists || exists.length===0){
-        const {error:insertError} = await sb
-          .from("online_users")
-          .insert({
-            username: currentUser,
-            last_active: now
-          });
-        if(insertError) throw insertError;
-      }
-    }catch(e){
-      showErr("在线状态更新失败:"+e.message);
-    }
-  };
-  await beat();
-  setInterval(beat, 30000);
-}
-async function renderOnline(){
-  const r = await db.select("online_users");
-  if(!r.ok)return;
-  const list = r.data||[];
-  document.getElementById("onlineCount").textContent = list.length + "人在线";
-  document.getElementById("onlineUserList").innerHTML = list.map(u=>`<div>${safeText(u.username)}</div>`).join("");
-}
-
-/* ---------- 个人资料 ---------- */
-async function loadProfile(){
-  const r = await db.select("account_store","*",{username:currentUser});
-  if(!r.ok||!r.data[0])return;
-  const u = r.data[0];
-  document.getElementById("userAvatar").src = u.avatar_url||"";
-  document.getElementById("profileNickname").value = u.nickname||"";
-  document.getElementById("profilePhone").value = u.phone||"";
-  document.getElementById("profileEmail").value = u.email||"";
-  document.getElementById("profileGender").value = u.gender||"";
-  document.getElementById("profileBio").value = u.bio||"";
-}
-async function saveProfile(){
-  const file = document.getElementById("avatarFile").files[0];
-  let avatarUrl = document.getElementById("userAvatar").src;
-  if(file){
-    const p = "avatars/"+Date.now()+"_"+file.name;
-    await sb.storage.from("media").upload(p,file,{upsert:true});
-    avatarUrl = sb.storage.from("media").getPublicUrl(p).data.publicUrl;
-  }
-  await db.update("account_store",{
-    nickname:document.getElementById("profileNickname").value,
-    phone:document.getElementById("profilePhone").value,
-    email:document.getElementById("profileEmail").value,
-    gender:document.getElementById("profileGender").value,
-    bio:document.getElementById("profileBio").value,
-    avatar_url:avatarUrl
-  },{username:currentUser});
-  showTip("个人资料已保存"); closeProfile();
-}
-
-/* ---------- 拖拽布局 P0修复#4: mouseup才写DB ---------- */
-function toggleLayoutEdit(){
-  layoutEditMode = !layoutEditMode;
-  document.querySelectorAll(".area").forEach(a=>a.classList.toggle("drag-enabled",layoutEditMode));
-  document.getElementById("toggleLayoutEditBtn").textContent = layoutEditMode?"✅退出编辑":"✏️布局编辑";
-  showTip(layoutEditMode?"拖拽模式已开启":"拖拽模式已关闭");
-}
-function enableDrag(el, recordId){
-  let startX, startY, origX, origY, moved=false;
-  el.addEventListener("mousedown", e=>{
-    if(!layoutEditMode)return;
-    e.preventDefault();
-    startX = e.clientX; startY = e.clientY;
-    origX = parseInt(el.style.left)||0; origY = parseInt(el.style.top)||0;
-    moved = false;
-    const onMove = ev=>{
-      const dx = ev.clientX - startX;
-      const dy = ev.clientY - startY;
-      if(Math.abs(dx)>2||Math.abs(dy)>2) moved = true;
-      el.style.left = (origX+dx)+"px";
-      el.style.top = (origY+dy)+"px";
-    };
-    const onUp = async ()=>{
-      document.removeEventListener("mousemove", onMove);
-      document.removeEventListener("mouseup", onUp);
-      /* P0修复#4: 只在mouseup时写一次数据库，mousemove不写 */
-      if(moved && recordId){
-        await db.update("media_playlist",{
-          x:parseInt(el.style.left), y:parseInt(el.style.top)
-        },{id:recordId});
-        showTip("位置已保存");
-      }
-    };
-    document.addEventListener("mousemove", onMove);
-    document.addEventListener("mouseup", onUp);
-  });
-}
-
-/* ---------- 布局渲染 ---------- */
-async function renderLayout(){
-  const canvas = document.getElementById("layoutCanvas");
-  canvas.innerHTML = "";
-  const zones = await db.select("custom_zones");
-  if(zones.ok&&zones.data){
-    zones.data.forEach(z=>{
-      const zd = document.createElement("div");
-      zd.className = "zone-container";
-      zd.style.cssText = `left:${z.x}px;top:${z.y}px;width:${z.width}px;height:${z.height}px`;
-      zd.innerHTML = `<div style="padding:6px;font-size:12px;color:#00ffff">${safeText(z.name||"分区")}</div>`;
-      canvas.appendChild(zd);
-    });
-  }
-  const items = await db.select("media_playlist");
-  if(items.ok&&items.data){
-    items.data.forEach(item=>{
-      const el = document.createElement("div");
-      el.className = "area";
-      el.style.cssText = `left:${item.x||20}px;top:${item.y||20}px;width:${item.content_width||220}px;height:${item.content_height||160}px`;
-      let inner = `<div class="drag-handle"></div>`;
-      if(item.type==="image") inner += `<img src="${item.url}">`;
-      else if(item.type==="video") inner += `<video muted src="${item.url}"></video>`;
-      else inner += `<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:36px">${item.type==="audio"?"🎵":item.type==="software"?"📦":"🎮"}</div>`;
-      el.innerHTML = inner;
-      canvas.appendChild(el);
-      enableDrag(el, item.id);
-    });
-  }
-}
-
-/* ---------- Realtime P0修复#5: 防抖去重 ---------- */
-function debouncedRefresh(){
-  if(refreshTimer) clearTimeout(refreshTimer);
-  refreshTimer = setTimeout(()=>refreshAll(), 500);
-}
-function startRealtime(){
-  if(realtimeChannel) return;
-  realtimeChannel = sb.channel("db_global")
-    .on("postgres_changes",{event:"*",schema:"public"},()=>debouncedRefresh())
-    .subscribe();
-}
-
-/* ---------- 全量刷新 ---------- */
-async function refreshAll(){
-  if(!currentUser) return;
-  await Promise.all([
-    loadSettings(),
-    renderBanner(),
-    renderResourceGrid(),
-    renderLayout(),
-    refreshZoneSelect(),
-    renderBannerList(),
-    renderZoneList(),
-    renderUsers(),
-    renderLogs(),
-    renderAdminResources(),
-    renderOnline()
-  ]);
-}
-
-/* ---------- 页面初始化 ---------- */
-(async function init(){
-  await loadSettings();
-  await renderBanner();
-  /* P0修复#3: 不恢复密码会话，只提示重新登录 */
-  const sess = localStorage.getItem("qingyin_session");
-  if(sess){
-    try{
-      const obj = JSON.parse(sess);
-      /* 不自动登录（密码不持久化），提示重新登录 */
-      showTip("请重新登录");
-    }catch{}
-  }
-  startRealtime();
-})();
-</script>
-</body>
-</html>
+          `<td><button class="danger" onclick="delDbRow('${t}',${row.id},${t==='system_settings'&&row.id===
