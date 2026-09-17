@@ -1,3 +1,4 @@
+
 <!-- 清音 V15 全功能在线版整合 -->
 <!-- 清音 V15 在线人数统计 -->
 <!-- 清音 V15 全功能最终整合版 -->
@@ -1127,6 +1128,9 @@ body,#loginBox,#homeBox,#panel{
 <button class="sidebar-item" onclick="switchTab('tab-webname')">🏷网页标题</button>
          <button class="sidebar-item" onclick="switchTab('tab-database')">🗄数据库管理</button>
 <button class="sidebar-item" onclick="switchTab('tab-logintext')">🔤登录页文字</button>
+<button class="sidebar-item" onclick="switchTab('tab-chat-admin')">💬聊天管理</button>
+<button class="sidebar-item" onclick="switchTab('tab-media-extra')">🏷素材标签/下载</button>
+<button class="sidebar-item" onclick="switchTab('tab-system-extra')">⚙️系统设置中心</button>
     </div>
     <div id="panel-content">
         
@@ -1283,6 +1287,54 @@ body,#loginBox,#homeBox,#panel{
                 <div id="databaseManageViewer"></div>
             </div>
         </div>
+
+        <!-- ===== 新增：聊天管理 ===== -->
+        <div id="tab-chat-admin" class="tab-content" style="display:none">
+            <div class="card">
+                <h3>聊天管理（清空公聊/私信）</h3>
+                <button class="danger" onclick="adminClearPublicChat()">清空公聊消息</button>
+                <button class="danger" onclick="adminClearAllPrivateChat()">清空全部私信</button>
+                <hr style="margin:15px 0;border-color:#00ffff33">
+                <h3>全局音频控制</h3>
+                <button onclick="globalAudioCmd('AUDIO_PLAY')">▶ 全部音频播放</button>
+                <button onclick="globalAudioCmd('AUDIO_PAUSE')">⏸ 全部音频暂停</button>
+                <button onclick="globalAudioCmd('AUDIO_STOP')">⏹ 全部音频停止</button>
+            </div>
+        </div>
+
+        <!-- ===== 新增：素材标签/下载 ===== -->
+        <div id="tab-media-extra" class="tab-content" style="display:none">
+            <div class="card">
+                <h3>素材标签设置</h3>
+                <p style="color:#aaa;font-size:13px">在下方素材列表中给素材打标签，多个标签用逗号分隔。标签会以小徽章显示在素材角落。</p>
+                <div id="tagMediaListWrap"></div>
+            </div>
+            <div class="card">
+                <h3>标签筛选（作用于主页素材显示）</h3>
+                <div id="tagFilterWrap"></div>
+                <button onclick="clearTagFilter()">清除筛选</button>
+            </div>
+        </div>
+
+        <!-- ===== 新增：系统设置中心 ===== -->
+        <div id="tab-system-extra" class="tab-content" style="display:none">
+            <div class="card">
+                <h3>文件大小与媒体类型限制</h3>
+                <label>最大上传文件大小（MB）：<input type="number" id="cfgMaxSizeMB" value="20" style="width:100px"></label>
+                <label>允许的媒体MIME类型（逗号分隔）：</label>
+                <textarea id="cfgMediaTypes" rows="3" style="width:100%" placeholder="image/jpeg,image/png,image/gif,image/webp,audio/mpeg,audio/wav,audio/ogg,video/mp4,video/webm"></textarea>
+                <button onclick="saveExtraConfig()">保存配置</button>
+            </div>
+            <div class="card">
+                <h3>站点公告（登录后弹出一次）</h3>
+                <textarea id="cfgNotice" rows="3" style="width:100%" placeholder="在此填写站点公告内容"></textarea>
+                <button onclick="saveNotice()">保存公告</button>
+            </div>
+            <div class="card">
+                <h3>当前配置</h3>
+                <div id="cfgShowBox" style="color:#aaa;font-size:13px"></div>
+            </div>
+        </div>
         </div>
     </div>
 </div>
@@ -1356,6 +1408,10 @@ function logout(){
     logoutBtn.style.display="none";
     panel.style.display="none";
     bottomUploadBtn.style.display="none";
+    const chatBtn=document.getElementById("chatFloatBtn");
+    if(chatBtn) chatBtn.style.display="none";
+    const chatModal=document.getElementById("chatModal");
+    if(chatModal) chatModal.style.display="none";
     closeUserUploadModal();
     document.querySelectorAll(".area,.zone-container").forEach(e=>{
         const vid=e.querySelector("video");
@@ -1412,6 +1468,8 @@ async function login(){
         loginBox.style.display="none";
         homeBox.style.display="block";
         bottomUploadBtn.style.display="block";
+        const chatBtn=document.getElementById("chatFloatBtn");
+        if(chatBtn) chatBtn.style.display="flex";
         document.getElementById("userName").innerText = "";
              renderUserProfile();
         logoutBtn.style.display="block";
@@ -1647,7 +1705,7 @@ async function userUploadMedia(){
         const p="media/"+Date.now()+"_"+file.name;
         await db.storage.from("media").upload(p,file,{upsert:true});
         const url=db.storage.from("media").getPublicUrl(p).data.publicUrl;
-        const type=file.type.startsWith("video")?"video":"image";
+        const type=file.type.startsWith("video")?"video":(file.type.startsWith("audio")?"audio":"image");
         await db.from("media_playlist").insert({
             type,url,zone_id:Number(zoneId),
             content_width:cw,content_height:ch,
@@ -1681,7 +1739,7 @@ async function uploadMedia(){
         let p="media/"+Date.now()+"_"+f.name;
         await db.storage.from("media").upload(p,f,{upsert:true});
         let url=db.storage.from("media").getPublicUrl(p).data.publicUrl;
-        let type=f.type.startsWith("video")?"video":"image";
+        let type=f.type.startsWith("video")?"video":(f.type.startsWith("audio")?"audio":"image");
         await db.from("media_playlist").insert({
             type,url,zone_id:zoneId,
             content_width:cw,content_height:ch,
@@ -1749,6 +1807,14 @@ async function refreshAll(){
         await loadSettings();
         await renderZonesAndContents();
         await renderMediaListPanel();
+        // ===== 新增功能钩子（不修改原有逻辑，仅追加）=====
+        await loadExtraConfig();
+        await renderChatPanel();
+        await renderTagMediaList();
+        await renderTagFilterOptions();
+        await applyTagFilter();
+        handleGlobalAudioCmd();
+        showNoticeOnce();
     }catch(err){
         console.error(err);
         showTip("刷新失败 "+err.message);
@@ -1848,6 +1914,7 @@ async function renderZonesAndContents(){
             document.body.appendChild(d);
         }
         if(a.type==="video") d.innerHTML=`<video controls muted src="${a.content}"></video>`;
+        else if(a.type==="audio") d.innerHTML=`<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#00ffff11;border-radius:8px"><audio controls src="${a.content}" style="width:95%"></audio></div>`;
         else if(a.type==="image") d.innerHTML=`<img src="${a.content}">`;
         else d.innerHTML=a.name||"";
         dragSave(d,a.id,a.zone_id);
@@ -1862,6 +1929,8 @@ async function renderMediaListPanel(){
     playlist.forEach(m=>{
         const thumbHtml=m.type==="image"
             ?`<img class="media-item-thumb" src="${m.url}" alt="">`
+            :m.type==="audio"
+            ?`<div class="media-item-thumb" style="display:flex;align-items:center;justify-content:center;background:#00ffff22">🎵</div>`
             :`<video class="media-item-thumb" muted src="${m.url}"></video>`;
         //权限：普通用户只能看到自己上传的；管理员全部可见
         const canEdit=(role==="admin"||role==="superadmin")||(m.uploader_username===currentUser);
@@ -2641,6 +2710,538 @@ async function saveQingyinSystemSettings(){
  await db.from("system_settings").update(data).eq("id",1);
  showTip("系统设置已保存");
 }
+</script>
+
+<!-- ============================================================ -->
+<!-- 新增：右下角24小时聊天系统 + 标签 + 下载 + 扩展设置 V17补丁 -->
+<!-- ============================================================ -->
+<style>
+/* 聊天悬浮按钮 */
+#chatFloatBtn{
+    display:none;
+    position:fixed;right:20px;bottom:90px;z-index:99990;
+    width:58px;height:58px;border-radius:50%;
+    background:#00ffff;color:#001018;border:2px solid #00ffff;
+    font-size:24px;align-items:center;justify-content:center;
+    box-shadow:0 0 18px #00ffff88;
+}
+#chatFloatBtn .chat-badge{
+    position:absolute;top:-4px;right:-4px;background:#ff4466;color:#fff;
+    font-size:11px;padding:2px 7px;border-radius:999px;display:none;
+}
+/* 聊天弹窗 */
+#chatModal{
+    display:none;position:fixed;right:16px;bottom:160px;z-index:99991;
+    width:min(380px,92vw);height:min(520px,70vh);
+    background:#0b1220f2;border:1px solid #00ffff;border-radius:16px;
+    flex-direction:column;overflow:hidden;
+    box-shadow:0 8px 40px #000a;
+}
+.chat-head{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:10px 14px;background:#00ffff22;border-bottom:1px solid #00ffff44;
+}
+.chat-head b{color:#00ffff;font-size:15px;}
+.chat-tabs{display:flex;gap:6px;padding:8px 10px 0;border-bottom:1px solid #223;}
+.chat-tab-btn{flex:1;padding:8px 4px;font-size:13px;min-height:36px;margin:0;
+    background:#ffffff10;border:1px solid #223;color:#aaa;border-radius:8px;}
+.chat-tab-btn.active{background:#00ffff22;color:#00ffff;border-color:#00ffff;}
+#chatMsgBox{flex:1;overflow-y:auto;padding:10px;font-size:14px;line-height:1.5;}
+.chat-msg{margin-bottom:8px;word-break:break-word;}
+.chat-msg .who{color:#00ffff;font-weight:bold;margin-right:6px;}
+.chat-msg .who.admin{color:#ffcc00;}
+.chat-msg audio{width:100%;margin-top:4px;}
+.chat-msg.sys .who{color:#888;}
+.chat-input-area{display:flex;gap:6px;padding:8px;border-top:1px solid #223;align-items:center;}
+.chat-input-area input[type=text]{flex:1;margin:0;min-width:0;}
+.chat-input-area button{margin:0;min-height:40px;padding:8px 10px;font-size:14px;}
+.chat-time{font-size:11px;color:#666;margin-left:6px;}
+/* 素材标签徽章 */
+.tag-badge{
+    position:absolute;top:2px;left:2px;z-index:5;
+    background:#00ffffcc;color:#001018;font-size:11px;
+    padding:2px 8px;border-radius:999px;cursor:pointer;
+    max-width:90%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.tag-badge:hover{background:#00ffff;}
+/* 素材下载按钮（鼠标悬停在.area上显示） */
+.media-download-btn{
+    position:absolute;bottom:2px;right:2px;z-index:5;
+    background:#000c;color:#00ffff;border:1px solid #00ffff;
+    font-size:11px;padding:3px 8px;border-radius:6px;cursor:pointer;display:none;
+}
+.area:hover .media-download-btn{display:block;}
+.area{position:relative;}
+/* 公告弹窗 */
+#noticeModal{
+    display:none;position:fixed;left:50%;top:40%;transform:translate(-50%,-50%);
+    z-index:10003;background:#111f;border:1px solid #00ffff;border-radius:16px;
+    padding:22px;width:min(440px,90vw);max-height:70vh;overflow-y:auto;
+}
+#noticeModal h3{color:#00ffff;margin-bottom:10px;}
+#noticeModal .notice-body{white-space:pre-wrap;line-height:1.6;margin-bottom:14px;}
+</style>
+
+<!-- 右下角聊天悬浮按钮 -->
+<div id="chatFloatBtn" onclick="toggleChat()">
+    💬<span class="chat-badge" id="chatBadge">0</span>
+</div>
+
+<!-- 聊天弹窗 -->
+<div id="chatModal">
+    <div class="chat-head">
+        <b>在线聊天</b>
+        <button onclick="toggleChat()" style="margin:0;padding:4px 10px;min-height:auto">✕</button>
+    </div>
+    <div class="chat-tabs">
+        <button class="chat-tab-btn active" data-tab="public" onclick="switchChatTab('public')">公聊大厅</button>
+        <button class="chat-tab-btn" data-tab="admin" onclick="switchChatTab('admin')">私信管理员</button>
+    </div>
+    <div id="chatMsgBox"></div>
+    <div class="chat-input-area">
+        <input type="text" id="chatInput" placeholder="输入消息..." onkeydown="if(event.key==='Enter')sendChatMsg()">
+        <input type="file" id="chatAudioFile" accept="audio/*" style="display:none">
+        <button onclick="document.getElementById('chatAudioFile').click()">🎵</button>
+        <button onclick="sendChatMsg()">发送</button>
+    </div>
+</div>
+
+<!-- 公告弹窗 -->
+<div id="noticeModal">
+    <h3>📢 站点公告</h3>
+    <div class="notice-body" id="noticeBody"></div>
+    <button onclick="document.getElementById('noticeModal').style.display='none'">我知道了</button>
+</div>
+
+<script>
+/* ==================== 扩展配置读写（复用 system_settings.announcement JSON）==================== */
+let extraConfig={maxFileSizeMB:20, allowMediaTypes:"image/jpeg,image/png,image/gif,image/webp,audio/mpeg,audio/wav,audio/ogg,video/mp4,video/webm"};
+let chatStore={notice:"", chat_public:[], chat_private:{}};
+
+async function readChatStore(){
+    const {data}=await db.from("system_settings").select("announcement").eq("id",1).single();
+    if(!data||!data.announcement){return {notice:"",chat_public:[],chat_private:{}};}
+    try{
+        const obj=JSON.parse(data.announcement);
+        if(obj&&typeof obj==="object"&&(obj.chat_public!==undefined||obj.chat_private!==undefined||obj.notice!==undefined)){
+            return {
+                notice:obj.notice||"",
+                chat_public:obj.chat_public||[],
+                chat_private:obj.chat_private||{}
+            };
+        }
+        // 不是JSON，当作纯文本公告
+        return {notice:data.announcement, chat_public:[], chat_private:{}};
+    }catch(e){
+        return {notice:data.announcement, chat_public:[], chat_private:{}};
+    }
+}
+
+async function writeChatStore(){
+    const payload={
+        notice:chatStore.notice||"",
+        chat_public:chatStore.chat_public||[],
+        chat_private:chatStore.chat_private||{},
+        config:extraConfig
+    };
+    await db.from("system_settings").update({announcement:JSON.stringify(payload)}).eq("id",1);
+}
+
+async function loadExtraConfig(){
+    const {data}=await db.from("system_settings").select("announcement").eq("id",1).single();
+    if(data&&data.announcement){
+        try{
+            const obj=JSON.parse(data.announcement);
+            if(obj&&typeof obj==="object"&&obj.config){
+                extraConfig=Object.assign(extraConfig,obj.config);
+            }
+        }catch(e){}
+    }
+    chatStore=await readChatStore();
+    // 填充后台输入框
+    const mb=document.getElementById("cfgMaxSizeMB");
+    if(mb) mb.value=extraConfig.maxFileSizeMB||20;
+    const mt=document.getElementById("cfgMediaTypes");
+    if(mt) mt.value=extraConfig.allowMediaTypes||"";
+    const nt=document.getElementById("cfgNotice");
+    if(nt) nt.value=chatStore.notice||"";
+    const sb=document.getElementById("cfgShowBox");
+    if(sb) sb.innerHTML="最大文件："+(extraConfig.maxFileSizeMB||20)+" MB<br>允许类型："+(extraConfig.allowMediaTypes||"");
+}
+
+async function saveExtraConfig(){
+    if(!(role==="admin"||role==="superadmin")){showTip("无权限");return;}
+    extraConfig.maxFileSizeMB=Number(document.getElementById("cfgMaxSizeMB").value)||20;
+    extraConfig.allowMediaTypes=document.getElementById("cfgMediaTypes").value;
+    await writeChatStore();
+    showTip("扩展配置已保存");
+    debounceRefreshAll();
+}
+
+async function saveNotice(){
+    if(!(role==="admin"||role==="superadmin")){showTip("无权限");return;}
+    chatStore.notice=document.getElementById("cfgNotice").value;
+    await writeChatStore();
+    showTip("公告已保存");
+    debounceRefreshAll();
+}
+
+// 公告登录后弹出一次
+function showNoticeOnce(){
+    if(!currentUser) return;
+    const key="qyin_notice_shown_"+(chatStore.notice||"").length+"_"+(chatStore.notice||"").slice(0,20);
+    if(chatStore.notice&&localStorage.getItem(key)!==("1")){
+        document.getElementById("noticeBody").innerText=chatStore.notice;
+        document.getElementById("noticeModal").style.display="block";
+        localStorage.setItem(key,"1");
+    }
+}
+
+/* ==================== 文件上传校验 ==================== */
+function checkFileAllowed(file){
+    const maxBytes=(extraConfig.maxFileSizeMB||20)*1024*1024;
+    if(file.size>maxBytes){
+        showTip("文件超过大小限制："+(extraConfig.maxFileSizeMB||20)+"MB");
+        return false;
+    }
+    const types=(extraConfig.allowMediaTypes||"").split(",").map(s=>s.trim().toLowerCase()).filter(Boolean);
+    if(types.length>0&&!types.includes((file.type||"").toLowerCase())){
+        showTip("文件类型不被允许："+(file.type||"未知"));
+        return false;
+    }
+    return true;
+}
+
+/* ==================== 右下角聊天系统 ==================== */
+let currentChatTab="public";
+let chatUnread=0;
+
+function toggleChat(){
+    const m=document.getElementById("chatModal");
+    m.style.display = m.style.display==="none"?"flex":"none";
+    if(m.style.display==="flex"){chatUnread=0;updateChatBadge();renderChatPanel();}
+}
+
+function switchChatTab(t){
+    currentChatTab=t;
+    document.querySelectorAll(".chat-tab-btn").forEach(b=>{
+        b.classList.toggle("active",b.dataset.tab===t);
+    });
+    renderChatPanel();
+}
+
+function updateChatBadge(){
+    const b=document.getElementById("chatBadge");
+    if(!b) return;
+    b.style.display=chatUnread>0?"block":"none";
+    b.innerText=chatUnread>99?"99+":chatUnread;
+}
+
+async function renderChatPanel(){
+    const box=document.getElementById("chatMsgBox");
+    if(!box) return;
+    chatStore=await readChatStore();
+    let list=[];
+    if(currentChatTab==="public"){
+        list=chatStore.chat_public||[];
+    }else{
+        const key="admin_"+currentUser;
+        list=chatStore.chat_private?.[key]||[];
+    }
+    // 只显示最近200条
+    list=list.slice(-200);
+    box.innerHTML=list.map(m=>{
+        const isSys=m.type==="sys";
+        const isAdmin=m.u==="admin"||m.u==="system";
+        let body="";
+        if(m.type==="audio"){
+            body=`<audio controls src="${m.c}"></audio>`;
+        }else{
+            body=(m.c||"").replace(/</g,"&lt;");
+        }
+        const time=m.ts?new Date(m.ts).toLocaleTimeString():"";
+        return `<div class="chat-msg ${isSys?"sys":""}">
+            <span class="who ${isAdmin?"admin":""}">${isSys?"":(m.u||"?")}</span>${body}
+            <span class="chat-time">${time}</span>
+        </div>`;
+    }).join("");
+    box.scrollTop=box.scrollHeight;
+}
+
+async function sendChatMsg(){
+    const input=document.getElementById("chatInput");
+    const text=(input.value||"").trim();
+    const audioFile=document.getElementById("chatAudioFile").files[0];
+    if(!text&&!audioFile){showTip("请输入消息或选择音频");return;}
+    if(!currentUser){showTip("请先登录");return;}
+
+    let msg={id:Date.now(),u:currentUser,t:"text",c:text,ts:Date.now()};
+    if(audioFile){
+        if(!checkFileAllowed(audioFile)) return;
+        try{
+            const path="chat_audio/"+Date.now()+"_"+audioFile.name;
+            await db.storage.from("media").upload(path,audioFile,{upsert:true});
+            const url=db.storage.from("media").getPublicUrl(path).data.publicUrl;
+            msg={id:Date.now(),u:currentUser,t:"audio",c:url,ts:Date.now()};
+        }catch(e){showTip("音频上传失败："+e.message);return;}
+    }
+
+    chatStore=await readChatStore();
+    if(currentChatTab==="public"){
+        if(!chatStore.chat_public) chatStore.chat_public=[];
+        chatStore.chat_public.push(msg);
+        // 保留最多500条
+        if(chatStore.chat_public.length>500) chatStore.chat_public=chatStore.chat_public.slice(-500);
+    }else{
+        const key="admin_"+currentUser;
+        if(!chatStore.chat_private) chatStore.chat_private={};
+        if(!chatStore.chat_private[key]) chatStore.chat_private[key]=[];
+        chatStore.chat_private[key].push(msg);
+        if(chatStore.chat_private[key].length>500) chatStore.chat_private[key]=chatStore.chat_private[key].slice(-500);
+    }
+    await writeChatStore();
+    input.value="";
+    document.getElementById("chatAudioFile").value="";
+    renderChatPanel();
+}
+
+// 管理员清空聊天
+async function adminClearPublicChat(){
+    if(!(role==="admin"||role==="superadmin")){showTip("无权限");return;}
+    if(!confirm("确认清空全部公聊消息？")) return;
+    chatStore=await readChatStore();
+    chatStore.chat_public=[];
+    await writeChatStore();
+    showTip("公聊已清空");
+    debounceRefreshAll();
+}
+async function adminClearAllPrivateChat(){
+    if(!(role==="admin"||role==="superadmin")){showTip("无权限");return;}
+    if(!confirm("确认清空全部私信记录？")) return;
+    chatStore=await readChatStore();
+    chatStore.chat_private={};
+    await writeChatStore();
+    showTip("私信已清空");
+    debounceRefreshAll();
+}
+
+/* ==================== 全局音频播放控制 ==================== */
+async function globalAudioCmd(cmd){
+    if(!(role==="admin"||role==="superadmin")){showTip("无权限");return;}
+    await db.from("layout_controls").upsert({id:1,command:cmd,updated_at:new Date()});
+    showTip("已发送："+cmd);
+    debounceRefreshAll();
+}
+
+async function handleGlobalAudioCmd(){
+    const {data}=await db.from("layout_controls").select("command").eq("id",1).single();
+    const cmd=data?.command;
+    if(!cmd||!cmd.startsWith("AUDIO_")) return;
+    const audios=document.querySelectorAll(".area audio");
+    audios.forEach(a=>{
+        if(cmd==="AUDIO_PLAY") a.play().catch(()=>{});
+        else if(cmd==="AUDIO_PAUSE") a.pause();
+        else if(cmd==="AUDIO_STOP"){a.pause();a.currentTime=0;}
+    });
+}
+
+/* ==================== 素材标签系统 ==================== */
+let activeTagFilter="";
+
+function parseMediaTags(nameStr){
+    if(!nameStr) return [];
+    const parts=nameStr.split("||");
+    if(parts.length<2) return [];
+    if(parts[1] && parts[1].startsWith("tags:")){
+        return parts[1].slice(5).split(",").map(s=>s.trim()).filter(Boolean);
+    }
+    return [];
+}
+
+function stripTagsFromName(nameStr){
+    if(!nameStr) return "";
+    const parts=nameStr.split("||");
+    return parts[0]||"";
+}
+
+// 渲染后台素材标签编辑列表
+async function renderTagMediaList(){
+    const wrap=document.getElementById("tagMediaListWrap");
+    if(!wrap) return;
+    const {data:list}=await db.from("media_playlist").select("*");
+    if(!list||list.length===0){wrap.innerHTML="<div>暂无素材</div>";return;}
+    let html="";
+    list.forEach(m=>{
+        const tags=parseMediaTags(m.name);
+        const canEdit=(role==="admin"||role==="superadmin")||(m.uploader_username===currentUser);
+        if(!canEdit) return;
+        const thumb=m.type==="image"?`<img class="media-item-thumb" src="${m.url}">`
+            :m.type==="audio"?`<div style="width:80px;height:60px;background:#00ffff22;border-radius:8px;display:flex;align-items:center;justify-content:center">🎵</div>`
+            :`<video class="media-item-thumb" muted src="${m.url}"></video>`;
+        html+=`<div class="media-item">
+            ${thumb}
+            <span style="font-size:13px">id:${m.id} ${stripTagsFromName(m.name)||m.type}</span>
+            <input type="text" id="tagInput_${m.id}" value="${tags.join(",")}" placeholder="标签1,标签2" style="flex:1;min-width:120px">
+            <button onclick="saveMediaTags(${m.id})">保存标签</button>
+        </div>`;
+    });
+    wrap.innerHTML=html||"<div>无可编辑素材</div>";
+}
+
+async function saveMediaTags(id){
+    const tagStr=document.getElementById("tagInput_"+id).value;
+    const tagList=tagStr.split(",").map(s=>s.trim()).filter(Boolean);
+    const {data:lay}=await db.from("custom_layouts").select("name").eq("id",id).single();
+    const {data:pl}=await db.from("media_playlist").select("name").eq("id",id).single();
+    const baseName=stripTagsFromName((lay&&lay.name)||(pl&&pl.name)||"");
+    const newName=tagList.length>0?(baseName+"||tags:"+tagList.join(",")):baseName;
+    await db.from("custom_layouts").update({name:newName}).eq("id",id);
+    await db.from("media_playlist").update({name:newName}).eq("id",id);
+    showTip("标签已保存");
+    debounceRefreshAll();
+}
+
+// 渲染标签筛选选项
+async function renderTagFilterOptions(){
+    const wrap=document.getElementById("tagFilterWrap");
+    if(!wrap) return;
+    const {data:list}=await db.from("media_playlist").select("name");
+    const tagSet=new Set();
+    (list||[]).forEach(m=>{
+        parseMediaTags(m.name).forEach(t=>tagSet.add(t));
+    });
+    const tags=[...tagSet];
+    let html=`<label>选择标签：<select id="tagFilterSel" onchange="setTagFilter(this.value)">
+        <option value="">全部素材</option>`;
+    tags.forEach(t=>{
+        html+=`<option value="${t}" ${activeTagFilter===t?"selected":""}>${t}</option>`;
+    });
+    html+="</select></label>";
+    wrap.innerHTML=html;
+}
+
+function setTagFilter(tag){
+    activeTagFilter=tag;
+    applyTagFilter();
+}
+function clearTagFilter(){
+    activeTagFilter="";
+    const sel=document.getElementById("tagFilterSel");
+    if(sel) sel.value="";
+    applyTagFilter();
+}
+
+// 应用筛选：遍历页面.area，根据dataset.tags显示/隐藏
+async function applyTagFilter(){
+    const {data:list}=await db.from("custom_layouts").select("id,name");
+    const tagMap={};
+    (list||[]).forEach(m=>{
+        tagMap[m.id]=parseMediaTags(m.name);
+    });
+    document.querySelectorAll(".area").forEach(el=>{
+        const id=el.dataset.layoutId;
+        const tags=tagMap[id]||[];
+        if(!activeTagFilter){
+            el.style.display="";
+        }else{
+            el.style.display=tags.includes(activeTagFilter)?"":"none";
+        }
+    });
+}
+
+/* ==================== 素材下载按钮注入 ==================== */
+// 在 renderZonesAndContents 渲染完.area后，给每个.area加下载按钮
+// 通过MutationObserver或直接在每次refreshAll后调用
+async function injectDownloadButtons(){
+    document.querySelectorAll(".area").forEach(async el=>{
+        if(el.querySelector(".media-download-btn")) return;
+        const id=el.dataset.layoutId;
+        if(!id) return;
+        const {data:lay}=await db.from("custom_layouts").select("content,type").eq("id",id).single();
+        if(!lay) return;
+        if(lay.type!=="image"&&lay.type!=="video"&&lay.type!=="audio") return;
+        const btn=document.createElement("button");
+        btn.className="media-download-btn";
+        btn.innerText="下载";
+        btn.onclick=(e)=>{
+            e.stopPropagation();
+            e.preventDefault();
+            const a=document.createElement("a");
+            a.href=lay.content;
+            a.download=(lay.name||"media_"+id);
+            a.target="_blank";
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+        };
+        el.appendChild(btn);
+        // 标签徽章
+        const {data:lay2}=await db.from("custom_layouts").select("name").eq("id",id).single();
+        const tags=parseMediaTags(lay2?.name);
+        if(tags.length>0){
+            const badge=document.createElement("div");
+            badge.className="tag-badge";
+            badge.innerText="#"+tags.slice(0,3).join(" #");
+            badge.title="点击按此标签筛选";
+            badge.onclick=(e)=>{
+                e.stopPropagation();
+                setTagFilter(tags[0]);
+                const sel=document.getElementById("tagFilterSel");
+                if(sel) sel.value=tags[0];
+            };
+            el.appendChild(badge);
+        }
+    });
+}
+
+/* ==================== 扩展文件上传accept：音频支持 ==================== */
+// 不修改原uploadMedia函数，在页面加载后扩展accept属性
+function extendUploadAccepts(){
+    const map={
+        "mediaFile":"image/*,video/*,audio/*",
+        "userMediaFile":"image/*,video/*,audio/*",
+        "bannerMediaFile":"image/*,video/*,audio/*"
+    };
+    Object.keys(map).forEach(id=>{
+        const el=document.getElementById(id);
+        if(el) el.accept=map[id];
+    });
+}
+extendUploadAccepts();
+
+/* ==================== 监听新消息未读数 ==================== */
+// system_settings表变更会触发debounceRefreshAll -> renderChatPanel
+// 聊天按钮未读：如果聊天面板未打开且有新消息，增加badge
+let lastChatMsgCount=0;
+async function checkUnreadChat(){
+    chatStore=await readChatStore();
+    const total=(chatStore.chat_public||[]).length;
+    if(lastChatMsgCount>0 && total>lastChatMsgCount){
+        const modal=document.getElementById("chatModal");
+        if(modal && modal.style.display!=="flex"){
+            chatUnread += (total-lastChatMsgCount);
+            updateChatBadge();
+        }
+    }
+    lastChatMsgCount=total;
+}
+// 定时检查未读
+setInterval(checkUnreadChat,3000);
+
+/* ==================== 登录后初始化 ==================== */
+// 在login成功后refreshAll会调用renderChatPanel等
+// 同时注入下载按钮
+const _origRefreshAll=refreshAll;
+// refreshAll末尾已追加钩子；这里再用MutationObserver兜底注入下载按钮
+let _downloadObserver=null;
+function setupDownloadObserver(){
+    if(_downloadObserver) return;
+    _downloadObserver=new MutationObserver(()=>{
+        injectDownloadButtons();
+    });
+    _downloadObserver.observe(document.body,{childList:true,subtree:true});
+}
+setupDownloadObserver();
 </script>
 
 </body>
