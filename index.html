@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -310,7 +311,7 @@ body,#loginBox,#homeBox,#panel{background-repeat:no-repeat!important;background-
  * ================================================================ */
 
 const SUPABASE_URL = "https://mqvxghfcglyrfnqmjtwd.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_YnQaAZSQZ3qhWwIovqaqWQ_uJNRwUrb";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xdnhnaGZjZ2x5cmZucW1qdHdkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk0ODM4NjgsImV4cCI6MjEwNTA1OTg2OH0.fkzrrGl7FTeEe0aHAjUvXjRb-DoUMnoz_XxwITvGFLk";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let currentUser = null, role = null;
@@ -747,7 +748,7 @@ async function loadSettings(){
   document.getElementById("globalOpacityRange").value = cfg.global_opacity||1;
   document.getElementById("globalOpacityValue").textContent = Math.round((cfg.global_opacity||1)*100)+"%";
   /* 公告 */
-  if(s.announcement && !localStorage.getItem("notice_read_"+s.id)){
+  if(s.announcement && String(s.announcement).trim() && !localStorage.getItem("notice_read_"+s.id)){
     document.getElementById("noticeBody").textContent = safeText(s.announcement);
     document.getElementById("noticeModal").style.display = "block";
     localStorage.setItem("notice_read_"+s.id, "1");
@@ -975,8 +976,33 @@ async function delResource(id){
 async function startOnline(){
   const beat = async ()=>{
     if(!currentUser)return;
-    await db.remove("online_users",{username:currentUser});
-    await db.insert("online_users",{username:currentUser,last_active:new Date().toISOString()});
+    try{
+      const now = new Date().toISOString();
+      const {error:updateError} = await sb
+        .from("online_users")
+        .update({last_active: now})
+        .eq("username", currentUser);
+
+      if(updateError) throw updateError;
+
+      const {data:exists} = await sb
+        .from("online_users")
+        .select("username")
+        .eq("username", currentUser)
+        .limit(1);
+
+      if(!exists || exists.length===0){
+        const {error:insertError} = await sb
+          .from("online_users")
+          .insert({
+            username: currentUser,
+            last_active: now
+          });
+        if(insertError) throw insertError;
+      }
+    }catch(e){
+      showErr("在线状态更新失败:"+e.message);
+    }
   };
   await beat();
   setInterval(beat, 30000);
